@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Bucket Investment Growth Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Three-Bucket Investment Growth Calculator</h1>
+            <p class="subtitle">Plan your financial future with the three-bucket strategy</p>
+        </header>
+
+        <div class="info-box">
+            <h3>About the Three-Bucket Strategy</h3>
+            <ul>
+                <li><strong>Tax-Deferred Bucket:</strong> Traditional 401(k)s, Traditional IRAs - Tax deduction now, pay taxes in retirement</li>
+                <li><strong>Tax-Free Bucket:</strong> Roth 401(k)s, Roth IRAs - Pay taxes now, tax-free growth and withdrawals</li>
+                <li><strong>Taxable Bucket:</strong> Regular brokerage accounts - No tax advantages, but maximum flexibility</li>
+            </ul>
+        </div>
+
+        <form id="calculatorForm">
+            <!-- Account Settings Section -->
+            <section class="form-section">
+                <h2>Account Settings</h2>
+                
+                <div class="account-row">
+                    <div class="input-group">
+                        <label for="taxDeferredBalance">Tax-Deferred Starting Balance ($)</label>
+                        <input type="number" id="taxDeferredBalance" min="0" step="0.01" value="0" required>
+                        <small>Traditional 401(k), Traditional IRA, etc.</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="taxDeferredRate">Growth Rate (%)</label>
+                        <input type="number" id="taxDeferredRate" min="0" max="100" step="0.1" value="8" required>
+                    </div>
+                </div>
+
+                <div class="account-row">
+                    <div class="input-group">
+                        <label for="taxFreeBalance">Tax-Free Starting Balance ($)</label>
+                        <input type="number" id="taxFreeBalance" min="0" step="0.01" value="0" required>
+                        <small>Roth 401(k), Roth IRA, etc.</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="taxFreeRate">Growth Rate (%)</label>
+                        <input type="number" id="taxFreeRate" min="0" max="100" step="0.1" value="8" required>
+                    </div>
+                </div>
+
+                <div class="account-row">
+                    <div class="input-group">
+                        <label for="taxableBalance">Taxable Starting Balance ($)</label>
+                        <input type="number" id="taxableBalance" min="0" step="0.01" value="0" required>
+                        <small>Regular brokerage accounts</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="taxableRate">Growth Rate (%)</label>
+                        <input type="number" id="taxableRate" min="0" max="100" step="0.1" value="8" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contribution Periods Section -->
+            <section class="form-section">
+                <h2>Monthly Contribution Periods</h2>
+                
+                <div id="contributionPeriods">
+                    <!-- Contribution periods will be added here dynamically -->
+                </div>
+
+                <button type="button" id="addPeriodBtn" class="btn btn-secondary">+ Add Contribution Period</button>
+            </section>
+
+            <button type="submit" class="btn btn-primary">Calculate Growth</button>
+        </form>
+
+        <!-- Results Section -->
+        <div id="results" class="results hidden">
+            <h2>Investment Growth Results</h2>
+            
+            <div class="results-grid">
+                <div class="result-card">
+                    <h3>Tax-Deferred Account</h3>
+                    <div class="result-amount" id="taxDeferredResult">$0</div>
+                    <div class="result-details">
+                        <p>Starting Balance: <span id="taxDeferredStart">$0</span></p>
+                        <p>Total Contributions: <span id="taxDeferredContributions">$0</span></p>
+                        <p>Investment Growth: <span id="taxDeferredGrowth">$0</span></p>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3>Tax-Free Account</h3>
+                    <div class="result-amount" id="taxFreeResult">$0</div>
+                    <div class="result-details">
+                        <p>Starting Balance: <span id="taxFreeStart">$0</span></p>
+                        <p>Total Contributions: <span id="taxFreeContributions">$0</span></p>
+                        <p>Investment Growth: <span id="taxFreeGrowth">$0</span></p>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3>Taxable Account</h3>
+                    <div class="result-amount" id="taxableResult">$0</div>
+                    <div class="result-details">
+                        <p>Starting Balance: <span id="taxableStart">$0</span></p>
+                        <p>Total Contributions: <span id="taxableContributions">$0</span></p>
+                        <p>Investment Growth: <span id="taxableGrowth">$0</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="period-results">
+                <h3>Balance at End of Each Period</h3>
+                <div class="period-results-table" id="periodResultsTable">
+                    <!-- Period results will be inserted here -->
+                </div>
+            </div>
+
+            <div class="total-summary">
+                <h3>Total Portfolio Value</h3>
+                <div class="total-amount" id="totalResult">$0</div>
+                <div class="total-breakdown">
+                    <p>Total Starting Balance: <span id="totalStart">$0</span></p>
+                    <p>Total Contributions: <span id="totalContributions">$0</span></p>
+                    <p>Total Investment Growth: <span id="totalGrowth">$0</span></p>
+                    <p>Total Time Period: <span id="totalYears">0</span> years</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>This calculator is for educational purposes only and does not constitute financial advice. 
+           Consult with a qualified financial advisor for personalized guidance.</p>
+        <p>Learn more about the Three-Bucket Strategy at <a href="https://moneyguy.com/article/the-3-bucket-strategy-how-much-should-you-invest-in-each-bucket/" target="_blank">Money Guy</a></p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
