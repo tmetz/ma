@@ -369,6 +369,62 @@ small {
     margin-bottom: 0;
 }
 
+.lump-sum-section {
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px;
+}
+
+.lump-sum-toggle {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.3s;
+}
+
+.lump-sum-toggle:hover {
+    color: #1d4ed8;
+}
+
+.toggle-icon {
+    font-size: 0.8rem;
+    display: inline-block;
+    transition: transform 0.3s;
+}
+
+.lump-sum-inputs {
+    margin-top: 15px;
+    padding: 20px;
+    background-color: var(--light-bg);
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+}
+
+.lump-sum-description {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.lump-sum-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+@media (max-width: 768px) {
+    .lump-sum-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .results {
     margin-top: 50px;
     padding-top: 30px;

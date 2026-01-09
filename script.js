@@ -70,6 +70,28 @@ function addContributionPeriod() {
                 </div>
             </div>
         </div>
+        <div class="lump-sum-section">
+            <button type="button" class="lump-sum-toggle" onclick="toggleLumpSum(${periodCount})">
+                <span class="toggle-icon">▶</span> Add Lump Sum Contributions (Optional)
+            </button>
+            <div class="lump-sum-inputs" id="lumpSumInputs-${periodCount}" style="display: none;">
+                <p class="lump-sum-description">Enter one-time amounts to add at the start of this period (e.g., inheritance, home sale proceeds).</p>
+                <div class="lump-sum-grid">
+                    <div class="input-group">
+                        <label for="taxDeferredLumpSum-${periodCount}">Tax-Deferred Lump Sum ($)</label>
+                        <input type="number" id="taxDeferredLumpSum-${periodCount}" min="0" step="0.01" value="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="taxFreeLumpSum-${periodCount}">Tax-Free Lump Sum ($)</label>
+                        <input type="number" id="taxFreeLumpSum-${periodCount}" min="0" step="0.01" value="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="taxableLumpSum-${periodCount}">Taxable Lump Sum ($)</label>
+                        <input type="number" id="taxableLumpSum-${periodCount}" min="0" step="0.01" value="0">
+                    </div>
+                </div>
+            </div>
+        </div>
     `;
     
     periodsContainer.appendChild(periodDiv);
@@ -80,6 +102,21 @@ function removePeriod(periodId) {
     const periodElement = document.getElementById(`period-${periodId}`);
     if (periodElement) {
         periodElement.remove();
+    }
+}
+
+// Toggle lump sum section visibility
+function toggleLumpSum(periodId) {
+    const lumpSumInputs = document.getElementById(`lumpSumInputs-${periodId}`);
+    const button = lumpSumInputs.previousElementSibling;
+    const icon = button.querySelector('.toggle-icon');
+    
+    if (lumpSumInputs.style.display === 'none') {
+        lumpSumInputs.style.display = 'block';
+        icon.textContent = '▼';
+    } else {
+        lumpSumInputs.style.display = 'none';
+        icon.textContent = '▶';
     }
 }
 
@@ -195,10 +232,18 @@ function calculateGrowth(event) {
         const duration = parseFloat(document.getElementById(`duration-${periodId}`).value);
         const taxDeferredContribution = parseFloat(document.getElementById(`taxDeferred-${periodId}`).value);
         const taxDeferredWithdrawal = parseFloat(document.getElementById(`taxDeferredWithdrawal-${periodId}`).value);
+        const taxDeferredLumpSum = parseFloat(document.getElementById(`taxDeferredLumpSum-${periodId}`).value) || 0;
         const taxFreeContribution = parseFloat(document.getElementById(`taxFree-${periodId}`).value);
         const taxFreeWithdrawal = parseFloat(document.getElementById(`taxFreeWithdrawal-${periodId}`).value);
+        const taxFreeLumpSum = parseFloat(document.getElementById(`taxFreeLumpSum-${periodId}`).value) || 0;
         const taxableContribution = parseFloat(document.getElementById(`taxable-${periodId}`).value);
         const taxableWithdrawal = parseFloat(document.getElementById(`taxableWithdrawal-${periodId}`).value);
+        const taxableLumpSum = parseFloat(document.getElementById(`taxableLumpSum-${periodId}`).value) || 0;
+        
+        // Add lump sums at the start of the period
+        taxDeferredBalance += taxDeferredLumpSum;
+        taxFreeBalance += taxFreeLumpSum;
+        taxableBalance += taxableLumpSum;
         
         // Calculate growth for tax-deferred account
         const taxDeferredResult = calculateCompoundGrowth(
