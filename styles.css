@@ -42,7 +42,7 @@ header {
 }
 
 h1 {
-    color: var(--primary-color);
+    color: var(--text-dark);
     font-size: 2.5rem;
     margin-bottom: 10px;
 }
