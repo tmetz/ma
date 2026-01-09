@@ -2,6 +2,8 @@
 
 A static web calculator for planning long-term investment growth using the three-bucket strategy. This calculator helps you visualize how different types of investment accounts (tax-deferred, tax-free, and taxable) will grow over time with various contribution periods.
 
+**[Try the calculator here →](https://tammymetz.com/ma/)**
+
 ## About the Three-Bucket Strategy
 
 The three-bucket strategy is a tax-optimization method for saving and investing:
