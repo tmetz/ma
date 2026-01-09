@@ -309,7 +309,7 @@ small {
 
 .period-basics-row {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 2fr 1.5fr 1fr;
     gap: 15px;
     margin-bottom: 20px;
 }
@@ -519,6 +519,7 @@ small {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.95rem;
+    border: 2px solid var(--secondary-color);
 }
 
 .period-table th {
@@ -532,6 +533,7 @@ small {
 .period-table td {
     padding: 12px;
     border-bottom: 1px solid var(--border-color);
+    vertical-align: top;
 }
 
 .period-table tr:hover {
@@ -547,9 +549,35 @@ small {
     color: var(--primary-color);
 }
 
+.period-table .period-cell {
+    white-space: nowrap;
+}
+
+.period-table .period-name {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 4px;
+    white-space: nowrap;
+}
+
+.period-table .period-duration {
+    font-size: 0.85em;
+    color: var(--text-light);
+    font-weight: normal;
+}
+
 .period-table .amount {
     text-align: right;
     font-family: 'Courier New', monospace;
+}
+
+.period-table .income-column {
+    border-left: 3px solid var(--secondary-color);
+    font-weight: 600;
+}
+
+.period-table tbody .income-column {
+    background-color: rgba(16, 185, 129, 0.05);
 }
 
 .total-summary {

@@ -9,6 +9,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up event listeners
     document.getElementById('addPeriodBtn').addEventListener('click', addContributionPeriod);
     document.getElementById('calculatorForm').addEventListener('submit', calculateGrowth);
+    
+    // Ensure page stays at top after initial load (using requestAnimationFrame ensures it runs after all browser auto-behaviors)
+    requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+        // Blur any focused element
+        if (document.activeElement) {
+            document.activeElement.blur();
+        }
+    });
 });
 
 // Add a new contribution period
@@ -27,11 +36,15 @@ function addContributionPeriod() {
         <div class="period-basics-row">
             <div class="input-group">
                 <label for="periodName-${periodCount}">Time Period Name</label>
-                <input type="text" id="periodName-${periodCount}" placeholder="Period Name (Optional)">
+                <input type="text" id="periodName-${periodCount}" placeholder="Period Name (Optional)" maxlength="10">
                 <small>Give this period a custom name (e.g., "Early Career", "Peak Earnings", "Retirement")</small>
             </div>
-            <div class="input-group">
-                <label for="duration-${periodCount}">Duration (Years)</label>
+            <div class="input-group">                
+                <label for="grossIncome-${periodCount}">Gross Income ($/month)</label>
+                <input type="number" id="grossIncome-${periodCount}" min="0" step="0.01" value="0">
+                <small>Income from employment, social security, etc.</small>
+            </div>
+            <div class="input-group">                <label for="duration-${periodCount}">Duration (Years)</label>
                 <input type="number" id="duration-${periodCount}" min="0" step="0.1" value="10" required>
             </div>
         </div>
@@ -230,6 +243,7 @@ function calculateGrowth(event) {
         
         const periodName = document.getElementById(`periodName-${periodId}`).value || `Period ${periodId}`;
         const duration = parseFloat(document.getElementById(`duration-${periodId}`).value);
+        const grossIncome = parseFloat(document.getElementById(`grossIncome-${periodId}`).value) || 0;
         const taxDeferredContribution = parseFloat(document.getElementById(`taxDeferred-${periodId}`).value);
         const taxDeferredWithdrawal = parseFloat(document.getElementById(`taxDeferredWithdrawal-${periodId}`).value);
         const taxDeferredLumpSum = parseFloat(document.getElementById(`taxDeferredLumpSum-${periodId}`).value) || 0;
@@ -286,6 +300,23 @@ function calculateGrowth(event) {
         
         totalYears += duration;
         
+        // Calculate income breakdown
+        // Taxable income = gross income - tax-deferred contributions + tax-deferred withdrawals + taxable withdrawals
+        // (tax-deferred contributions reduce taxable income since they're pre-tax)
+        const taxableMonthlyIncome = grossIncome - taxDeferredContribution + taxDeferredWithdrawal + taxableWithdrawal;
+        // Tax-free income = tax-free withdrawals
+        const taxFreeMonthlyIncome = taxFreeWithdrawal;
+        const totalMonthlyIncome = taxableMonthlyIncome + taxFreeMonthlyIncome;
+        
+        // Calculate yearly take-home pay
+        const annualTaxableIncome = taxableMonthlyIncome * 12;
+        const annualTaxFreeIncome = taxFreeMonthlyIncome * 12;
+        const federalTax = calculateFederalTax(annualTaxableIncome);
+        const marylandStateTax = calculateMarylandStateTax(annualTaxableIncome);
+        const frederickCountyTax = calculateFrederickCountyTax(annualTaxableIncome);
+        const totalTax = federalTax + marylandStateTax + frederickCountyTax;
+        const yearlyTakeHome = (annualTaxableIncome - totalTax) + annualTaxFreeIncome;
+        
         // Store period results
         periodResults.push({
             periodNumber: periodResults.length + 1,
@@ -295,7 +326,11 @@ function calculateGrowth(event) {
             taxDeferred: taxDeferredBalance,
             taxFree: taxFreeBalance,
             taxable: taxableBalance,
-            total: taxDeferredBalance + taxFreeBalance + taxableBalance
+            total: taxDeferredBalance + taxFreeBalance + taxableBalance,
+            yearlyTaxableIncome: annualTaxableIncome,
+            yearlyTaxFreeIncome: annualTaxFreeIncome,
+            totalIncome: totalMonthlyIncome,
+            yearlyTakeHome: yearlyTakeHome
         });
     });
     
@@ -402,13 +437,15 @@ function displayPeriodResults(periodResults, formatCurrency) {
         <table class="period-table">
             <thead>
                 <tr>
-                    <th>Period Name</th>
-                    <th>Years in Period</th>
+                    <th>Period</th>
                     <th>Cumulative Years</th>
                     <th class="amount">Tax-Deferred</th>
                     <th class="amount">Tax-Free</th>
                     <th class="amount">Taxable</th>
                     <th class="amount">Total Balance</th>
+                    <th class="amount income-column">Taxable Income (Yearly)</th>
+                    <th class="amount income-column">Tax-Free Income (Yearly)</th>
+                    <th class="amount income-column">Yearly Take-Home</th>
                 </tr>
             </thead>
             <tbody>
@@ -417,13 +454,18 @@ function displayPeriodResults(periodResults, formatCurrency) {
     periodResults.forEach(period => {
         tableHTML += `
             <tr>
-                <td class="period-number">${period.periodName}</td>
-                <td>${period.duration.toFixed(1)} years</td>
-                <td>${period.cumulativeYears.toFixed(1)} years</td>
-                <td class="amount">${formatCurrency(period.taxDeferred)}</td>
-                <td class="amount">${formatCurrency(period.taxFree)}</td>
-                <td class="amount">${formatCurrency(period.taxable)}</td>
-                <td class="amount"><strong>${formatCurrency(period.total)}</strong></td>
+                <td class="period-cell">
+                    <div class="period-name">${period.periodName}</div>
+                    <div class="period-duration">(${period.duration.toFixed(1)} years)</div>
+                </td>
+                <td><div>${period.cumulativeYears.toFixed(1)} years</div><div></div></td>
+                <td class="amount"><div>${formatCurrency(period.taxDeferred)}</div><div></div></td>
+                <td class="amount"><div>${formatCurrency(period.taxFree)}</div><div></div></td>
+                <td class="amount"><div>${formatCurrency(period.taxable)}</div><div></div></td>
+                <td class="amount"><div><strong>${formatCurrency(period.total)}</strong></div><div></div></td>
+                <td class="amount income-column"><div>${formatCurrency(period.yearlyTaxableIncome)}</div><div></div></td>
+                <td class="amount income-column"><div>${formatCurrency(period.yearlyTaxFreeIncome)}</div><div></div></td>
+                <td class="amount income-column"><div><strong>${formatCurrency(period.yearlyTakeHome)}</strong></div><div></div></td>
             </tr>
         `;
     });
