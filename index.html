@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1>Three-Bucket Investment Growth Calculator</h1>
-            <p class="subtitle">Plan your financial future with the three-bucket strategy</p>
+            <p class="subtitle">(Based on the <a href="https://moneyguy.com/article/the-3-bucket-strategy-how-much-should-you-invest-in-each-bucket/" target="_blank">Money Guys</a> concept)</p>
         </header>
 
         <div class="info-box">
@@ -18,7 +18,7 @@
             <ul>
                 <li><strong>Tax-Deferred Bucket:</strong> Traditional 401(k)s, Traditional IRAs - Tax deduction now, pay taxes in retirement</li>
                 <li><strong>Tax-Free Bucket:</strong> Roth 401(k)s, Roth IRAs - Pay taxes now, tax-free growth and withdrawals</li>
-                <li><strong>Taxable Bucket:</strong> Regular brokerage accounts - No tax advantages, but maximum flexibility</li>
+                <li><strong>Taxable Bucket:</strong> Regular brokerage accounts, savings accounts - No tax advantages, but maximum flexibility</li>
             </ul>
         </div>
 
@@ -62,6 +62,21 @@
                         <input type="number" id="taxableRate" min="0" max="100" step="0.1" value="8" required>
                     </div>
                 </div>
+
+                <div class="input-group">
+                    <label>Compound Frequency:</label>
+                    <div class="radio-group-inline">
+                        <label class="radio-label-inline">
+                            <input type="radio" name="compoundFrequency" value="monthly" checked>
+                            <span>Monthly</span>
+                        </label>
+                        <label class="radio-label-inline">
+                            <input type="radio" name="compoundFrequency" value="annually">
+                            <span>Annually</span>
+                        </label>
+                    </div>
+                    <small>Monthly compounding applies growth 12 times per year, while annual compounding applies it once per year.</small>
+                </div>
             </section>
 
             <!-- Contribution Periods Section -->
@@ -89,6 +104,7 @@
                     <div class="result-details">
                         <p>Starting Balance: <span id="taxDeferredStart">$0</span></p>
                         <p>Total Contributions: <span id="taxDeferredContributions">$0</span></p>
+                        <p>Total Withdrawals: <span id="taxDeferredWithdrawals">$0</span></p>
                         <p>Investment Growth: <span id="taxDeferredGrowth">$0</span></p>
                     </div>
                 </div>
@@ -99,6 +115,7 @@
                     <div class="result-details">
                         <p>Starting Balance: <span id="taxFreeStart">$0</span></p>
                         <p>Total Contributions: <span id="taxFreeContributions">$0</span></p>
+                        <p>Total Withdrawals: <span id="taxFreeWithdrawals">$0</span></p>
                         <p>Investment Growth: <span id="taxFreeGrowth">$0</span></p>
                     </div>
                 </div>
@@ -109,6 +126,7 @@
                     <div class="result-details">
                         <p>Starting Balance: <span id="taxableStart">$0</span></p>
                         <p>Total Contributions: <span id="taxableContributions">$0</span></p>
+                        <p>Total Withdrawals: <span id="taxableWithdrawals">$0</span></p>
                         <p>Investment Growth: <span id="taxableGrowth">$0</span></p>
                     </div>
                 </div>
@@ -127,6 +145,7 @@
                 <div class="total-breakdown">
                     <p>Total Starting Balance: <span id="totalStart">$0</span></p>
                     <p>Total Contributions: <span id="totalContributions">$0</span></p>
+                    <p>Total Withdrawals: <span id="totalWithdrawals">$0</span></p>
                     <p>Total Investment Growth: <span id="totalGrowth">$0</span></p>
                     <p>Total Time Period: <span id="totalYears">0</span> years</p>
                 </div>
@@ -137,7 +156,6 @@
     <footer>
         <p>This calculator is for educational purposes only and does not constitute financial advice. 
            Consult with a qualified financial advisor for personalized guidance.</p>
-        <p>Learn more about the Three-Bucket Strategy at <a href="https://moneyguy.com/article/the-3-bucket-strategy-how-much-should-you-invest-in-each-bucket/" target="_blank">Money Guy</a></p>
     </footer>
 
     <script src="script.js"></script>
