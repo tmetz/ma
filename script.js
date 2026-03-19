@@ -428,14 +428,14 @@ function calculateGrowth(event) {
             : 0;
         // Tax-free income = tax-free withdrawals
         const taxFreeMonthlyIncome = taxFreeWithdrawal;
+        const annualOrdinaryTaxableIncome = taxableMonthlyIncome * 12;
         const annualBrokerageWithdrawal = duration > 0 ? brokerageResult.totalWithdrawals / duration : 0;
         const annualSavingsWithdrawal = duration > 0 ? savingsResult.totalWithdrawals / duration : 0;
-        const annualTaxFreeIncome = taxFreeMonthlyIncome * 12;
-        const annualNonTaxableBucket3Income = (annualBrokerageWithdrawal - annualLongTermCapitalGains) + annualSavingsWithdrawal;
-        const totalMonthlyIncome = taxableMonthlyIncome + taxFreeMonthlyIncome + (annualNonTaxableBucket3Income / 12);
+        const annualBrokeragePrincipalWithdrawal = Math.max(0, annualBrokerageWithdrawal - annualLongTermCapitalGains);
+        const annualTaxFreeIncome = (taxFreeMonthlyIncome * 12) + annualSavingsWithdrawal + annualBrokeragePrincipalWithdrawal;
+        const totalMonthlyIncome = (annualOrdinaryTaxableIncome + annualLongTermCapitalGains + annualTaxFreeIncome) / 12;
         
         // Calculate yearly take-home pay
-        const annualOrdinaryTaxableIncome = taxableMonthlyIncome * 12;
         const annualTaxableIncome = annualOrdinaryTaxableIncome + annualLongTermCapitalGains;
         const federalTax = calculateFederalTax(annualOrdinaryTaxableIncome);
         const federalLongTermCapitalGainsTax = calculateLongTermCapitalGainsTax(
@@ -445,7 +445,7 @@ function calculateGrowth(event) {
         const marylandStateTax = calculateMarylandStateTax(annualTaxableIncome);
         const frederickCountyTax = calculateFrederickCountyTax(annualTaxableIncome);
         const totalTax = federalTax + federalLongTermCapitalGainsTax + marylandStateTax + frederickCountyTax;
-        const yearlyTakeHome = (annualTaxableIncome + annualTaxFreeIncome + annualNonTaxableBucket3Income) - totalTax;
+        const yearlyTakeHome = (annualTaxableIncome + annualTaxFreeIncome) - totalTax;
 
         const taxableBalance = brokerageBalance + savingsBalance;
         
