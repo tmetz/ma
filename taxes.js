@@ -1,15 +1,15 @@
 // Tax calculation functions for Three Bucket Investment Calculator
 
-// Calculate federal income tax for single filer (2024 brackets)
+// Calculate federal income tax for single filer (2025 brackets)
 function calculateFederalTax(annualIncome) {
-    // 2024 tax brackets for single filers
+    // 2025 tax brackets for single filers
     const brackets = [
-        { limit: 11600, rate: 0.10 },
-        { limit: 47150, rate: 0.12 },
-        { limit: 100525, rate: 0.22 },
-        { limit: 191950, rate: 0.24 },
-        { limit: 243725, rate: 0.32 },
-        { limit: 609350, rate: 0.35 },
+        { limit: 11925, rate: 0.10 },
+        { limit: 48475, rate: 0.12 },
+        { limit: 103350, rate: 0.22 },
+        { limit: 197300, rate: 0.24 },
+        { limit: 250525, rate: 0.32 },
+        { limit: 626350, rate: 0.35 },
         { limit: Infinity, rate: 0.37 }
     ];
     
