@@ -35,6 +35,39 @@ function calculateFederalTax(annualIncome) {
     return tax;
 }
 
+// Calculate federal long-term capital gains tax for single filer (2025 thresholds from IRS Topic 409)
+function calculateLongTermCapitalGainsTax(ordinaryTaxableIncome, longTermCapitalGains) {
+    if (longTermCapitalGains <= 0) {
+        return 0;
+    }
+
+    // IRS Topic 409 (tax year 2025, single filer)
+    const zeroRateLimit = 48350;
+    const fifteenRateLimit = 533400;
+
+    let remainingGains = longTermCapitalGains;
+    let tax = 0;
+
+    // Fill the 0% band after ordinary taxable income.
+    const zeroRateSpace = Math.max(0, zeroRateLimit - ordinaryTaxableIncome);
+    const gainsAtZero = Math.min(remainingGains, zeroRateSpace);
+    remainingGains -= gainsAtZero;
+
+    // Then fill the 15% band.
+    const fifteenBandFloor = Math.max(ordinaryTaxableIncome, zeroRateLimit);
+    const fifteenRateSpace = Math.max(0, fifteenRateLimit - fifteenBandFloor);
+    const gainsAtFifteen = Math.min(remainingGains, fifteenRateSpace);
+    tax += gainsAtFifteen * 0.15;
+    remainingGains -= gainsAtFifteen;
+
+    // Any remaining gains are taxed at 20%.
+    if (remainingGains > 0) {
+        tax += remainingGains * 0.20;
+    }
+
+    return tax;
+}
+
 // Calculate Maryland state income tax for single filer (2024 brackets)
 function calculateMarylandStateTax(annualIncome) {
     // Standard deduction (15% of income, min $1,800, max $2,700)

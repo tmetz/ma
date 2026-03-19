@@ -10,7 +10,7 @@ The three-bucket strategy is a tax-optimization method for saving and investing:
 
 1. **Tax-Deferred Bucket** (Traditional 401k, Traditional IRA): Get a tax deduction now, pay taxes in retirement
 2. **Tax-Free Bucket** (Roth 401k, Roth IRA): Pay taxes now, enjoy tax-free growth and withdrawals
-3. **Taxable Bucket** (Regular brokerage accounts): No tax advantages, but maximum flexibility
+3. **After Tax/Taxable Bucket** (Regular brokerage accounts): No tax advantages, but maximum flexibility
 
 Learn more at [Money Guy's Three-Bucket Strategy](https://moneyguy.com/article/the-3-bucket-strategy-how-much-should-you-invest-in-each-bucket/)
 

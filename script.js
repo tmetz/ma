@@ -222,6 +222,7 @@ function calculateGrowth(event) {
     let taxDeferredBalance = taxDeferredStart;
     let taxFreeBalance = taxFreeStart;
     let taxableBalance = taxableStart;
+    let taxableCostBasis = taxableStart;
     
     let taxDeferredTotalContributions = 0;
     let taxFreeTotalContributions = 0;
@@ -253,11 +254,18 @@ function calculateGrowth(event) {
         const taxableContribution = parseFloat(document.getElementById(`taxable-${periodId}`).value);
         const taxableWithdrawal = parseFloat(document.getElementById(`taxableWithdrawal-${periodId}`).value);
         const taxableLumpSum = parseFloat(document.getElementById(`taxableLumpSum-${periodId}`).value) || 0;
+
+        // Estimate taxable account gain ratio before this period's cash flows.
+        // This is used to estimate what share of taxable withdrawals is long-term gain.
+        const taxableGainRatio = taxableBalance > 0
+            ? Math.max(0, (taxableBalance - taxableCostBasis) / taxableBalance)
+            : 0;
         
         // Add lump sums at the start of the period
         taxDeferredBalance += taxDeferredLumpSum;
         taxFreeBalance += taxFreeLumpSum;
         taxableBalance += taxableLumpSum;
+        taxableCostBasis += taxableLumpSum;
         
         // Calculate growth for tax-deferred account
         const taxDeferredResult = calculateCompoundGrowth(
@@ -297,24 +305,37 @@ function calculateGrowth(event) {
         taxableBalance = taxableResult.finalBalance;
         taxableTotalContributions += taxableResult.totalContributions;
         taxableTotalWithdrawals += taxableResult.totalWithdrawals;
+
+        // Update estimated taxable account cost basis after this period.
+        const taxableWithdrawalBasisPortion = taxableResult.totalWithdrawals * (1 - taxableGainRatio);
+        taxableCostBasis += taxableResult.totalContributions - taxableWithdrawalBasisPortion;
+        taxableCostBasis = Math.max(0, Math.min(taxableCostBasis, taxableBalance));
         
         totalYears += duration;
         
         // Calculate income breakdown
-        // Taxable income = gross income - tax-deferred contributions + tax-deferred withdrawals + taxable withdrawals
+        // Taxable ordinary income = gross income - tax-deferred contributions + tax-deferred withdrawals
         // (tax-deferred contributions reduce taxable income since they're pre-tax)
-        const taxableMonthlyIncome = grossIncome - taxDeferredContribution + taxDeferredWithdrawal + taxableWithdrawal;
+        const taxableMonthlyIncome = grossIncome - taxDeferredContribution + taxDeferredWithdrawal;
+
+        // Estimate taxable account withdrawal gains and treat them as long-term capital gains.
+        const annualLongTermCapitalGains = (taxableWithdrawal * 12) * taxableGainRatio;
         // Tax-free income = tax-free withdrawals
         const taxFreeMonthlyIncome = taxFreeWithdrawal;
         const totalMonthlyIncome = taxableMonthlyIncome + taxFreeMonthlyIncome;
         
         // Calculate yearly take-home pay
-        const annualTaxableIncome = taxableMonthlyIncome * 12;
+        const annualOrdinaryTaxableIncome = taxableMonthlyIncome * 12;
+        const annualTaxableIncome = annualOrdinaryTaxableIncome + annualLongTermCapitalGains;
         const annualTaxFreeIncome = taxFreeMonthlyIncome * 12;
-        const federalTax = calculateFederalTax(annualTaxableIncome);
+        const federalTax = calculateFederalTax(annualOrdinaryTaxableIncome);
+        const federalLongTermCapitalGainsTax = calculateLongTermCapitalGainsTax(
+            annualOrdinaryTaxableIncome,
+            annualLongTermCapitalGains
+        );
         const marylandStateTax = calculateMarylandStateTax(annualTaxableIncome);
         const frederickCountyTax = calculateFrederickCountyTax(annualTaxableIncome);
-        const totalTax = federalTax + marylandStateTax + frederickCountyTax;
+        const totalTax = federalTax + federalLongTermCapitalGainsTax + marylandStateTax + frederickCountyTax;
         const yearlyTakeHome = (annualTaxableIncome - totalTax) + annualTaxFreeIncome;
         
         // Store period results
