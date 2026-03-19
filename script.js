@@ -72,7 +72,7 @@ function addContributionPeriod() {
                 </div>
             </div>
             <div class="account-group taxable-group">
-                <h5>Bucket 3 Brokerage</h5>
+                <h5>Brokerage</h5>
                 <div class="input-group">
                     <label for="brokerage-${periodCount}">Contribution ($/month)</label>
                     <input type="number" id="brokerage-${periodCount}" min="0" step="0.01" value="0" required>
@@ -83,7 +83,7 @@ function addContributionPeriod() {
                 </div>
             </div>
             <div class="account-group taxable-group">
-                <h5>Bucket 3 Savings</h5>
+                <h5>Savings</h5>
                 <div class="input-group">
                     <label for="savings-${periodCount}">Contribution ($/month)</label>
                     <input type="number" id="savings-${periodCount}" min="0" step="0.01" value="0" required>
