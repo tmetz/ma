@@ -18,7 +18,7 @@
             <ul>
                 <li><strong>Tax-Deferred Bucket:</strong> Traditional 401(k)s, Traditional IRAs - Tax deduction now, pay taxes in retirement</li>
                 <li><strong>Tax-Free Bucket:</strong> Roth 401(k)s, Roth IRAs - Pay taxes now, tax-free growth and withdrawals</li>
-                <li><strong>Taxable Bucket:</strong> Regular brokerage accounts, savings accounts - No tax advantages, but maximum flexibility</li>
+                <li><strong>After Tax/Taxable Bucket:</strong> Regular brokerage accounts, savings accounts - No tax advantages, but maximum flexibility</li>
             </ul>
         </div>
 
@@ -53,13 +53,25 @@
 
                 <div class="account-row">
                     <div class="input-group">
-                        <label for="taxableBalance">Taxable Starting Balance ($)</label>
-                        <input type="number" id="taxableBalance" min="0" step="0.01" value="0" required>
-                        <small>Regular brokerage accounts</small>
+                        <label for="brokerageBalance">Bucket 3 Brokerage Starting Balance ($)</label>
+                        <input type="number" id="brokerageBalance" min="0" step="0.01" value="0" required>
+                        <small>Brokerage accounts (subject to capital gains)</small>
                     </div>
                     <div class="input-group">
-                        <label for="taxableRate">Growth Rate (%)</label>
-                        <input type="number" id="taxableRate" min="0" max="100" step="0.1" value="8" required>
+                        <label for="brokerageRate">Growth Rate (%)</label>
+                        <input type="number" id="brokerageRate" min="0" max="100" step="0.1" value="8" required>
+                    </div>
+                </div>
+
+                <div class="account-row">
+                    <div class="input-group">
+                        <label for="savingsBalance">Bucket 3 Savings Starting Balance ($)</label>
+                        <input type="number" id="savingsBalance" min="0" step="0.01" value="0" required>
+                        <small>Savings/cash accounts (not taxed in this model)</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="savingsRate">Growth Rate (%)</label>
+                        <input type="number" id="savingsRate" min="0" max="100" step="0.1" value="4" required>
                     </div>
                 </div>
 
@@ -128,6 +140,13 @@
                         <p>Total Contributions: <span id="taxableContributions">$0</span></p>
                         <p>Total Withdrawals: <span id="taxableWithdrawals">$0</span></p>
                         <p>Investment Growth: <span id="taxableGrowth">$0</span></p>
+                        <div class="bucket3-breakdown">
+                            <p class="breakdown-title">Bucket 3 Breakdown</p>
+                            <p>Brokerage Final: <span id="brokerageResult">$0</span></p>
+                            <p>Brokerage Growth: <span id="brokerageGrowth">$0</span></p>
+                            <p>Savings Final: <span id="savingsResult">$0</span></p>
+                            <p>Savings Growth: <span id="savingsGrowth">$0</span></p>
+                        </div>
                     </div>
                 </div>
             </div>

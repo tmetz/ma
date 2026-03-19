@@ -497,6 +497,20 @@ small {
     font-weight: 600;
 }
 
+.bucket3-breakdown {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.4);
+}
+
+.bucket3-breakdown .breakdown-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    opacity: 0.95;
+    margin-bottom: 8px;
+}
+
 .period-results {
     margin-bottom: 30px;
     background-color: white;

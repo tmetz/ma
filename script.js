@@ -72,14 +72,25 @@ function addContributionPeriod() {
                 </div>
             </div>
             <div class="account-group taxable-group">
-                <h5>Taxable</h5>
+                <h5>Bucket 3 Brokerage</h5>
                 <div class="input-group">
-                    <label for="taxable-${periodCount}">Contribution ($/month)</label>
-                    <input type="number" id="taxable-${periodCount}" min="0" step="0.01" value="0" required>
+                    <label for="brokerage-${periodCount}">Contribution ($/month)</label>
+                    <input type="number" id="brokerage-${periodCount}" min="0" step="0.01" value="0" required>
                 </div>
                 <div class="input-group">
-                    <label for="taxableWithdrawal-${periodCount}">Withdrawal ($/month)</label>
-                    <input type="number" id="taxableWithdrawal-${periodCount}" min="0" step="0.01" value="0" required>
+                    <label for="brokerageWithdrawal-${periodCount}">Withdrawal ($/month)</label>
+                    <input type="number" id="brokerageWithdrawal-${periodCount}" min="0" step="0.01" value="0" required>
+                </div>
+            </div>
+            <div class="account-group taxable-group">
+                <h5>Bucket 3 Savings</h5>
+                <div class="input-group">
+                    <label for="savings-${periodCount}">Contribution ($/month)</label>
+                    <input type="number" id="savings-${periodCount}" min="0" step="0.01" value="0" required>
+                </div>
+                <div class="input-group">
+                    <label for="savingsWithdrawal-${periodCount}">Withdrawal ($/month)</label>
+                    <input type="number" id="savingsWithdrawal-${periodCount}" min="0" step="0.01" value="0" required>
                 </div>
             </div>
         </div>
@@ -99,8 +110,12 @@ function addContributionPeriod() {
                         <input type="number" id="taxFreeLumpSum-${periodCount}" min="0" step="0.01" value="0">
                     </div>
                     <div class="input-group">
-                        <label for="taxableLumpSum-${periodCount}">Taxable Lump Sum ($)</label>
-                        <input type="number" id="taxableLumpSum-${periodCount}" min="0" step="0.01" value="0">
+                        <label for="brokerageLumpSum-${periodCount}">Brokerage Lump Sum ($)</label>
+                        <input type="number" id="brokerageLumpSum-${periodCount}" min="0" step="0.01" value="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="savingsLumpSum-${periodCount}">Savings Lump Sum ($)</label>
+                        <input type="number" id="savingsLumpSum-${periodCount}" min="0" step="0.01" value="0">
                     </div>
                 </div>
             </div>
@@ -283,12 +298,15 @@ function calculateGrowth(event) {
     // Get starting balances
     const taxDeferredStart = parseFloat(document.getElementById('taxDeferredBalance').value);
     const taxFreeStart = parseFloat(document.getElementById('taxFreeBalance').value);
-    const taxableStart = parseFloat(document.getElementById('taxableBalance').value);
+    const brokerageStart = parseFloat(document.getElementById('brokerageBalance').value);
+    const savingsStart = parseFloat(document.getElementById('savingsBalance').value);
+    const taxableStart = brokerageStart + savingsStart;
     
     // Get growth rates
     const taxDeferredRate = parseFloat(document.getElementById('taxDeferredRate').value);
     const taxFreeRate = parseFloat(document.getElementById('taxFreeRate').value);
-    const taxableRate = parseFloat(document.getElementById('taxableRate').value);
+    const brokerageRate = parseFloat(document.getElementById('brokerageRate').value);
+    const savingsRate = parseFloat(document.getElementById('savingsRate').value);
     
     // Get compound frequency
     const compoundFrequency = document.querySelector('input[name="compoundFrequency"]:checked').value;
@@ -296,16 +314,19 @@ function calculateGrowth(event) {
     // Initialize running balances
     let taxDeferredBalance = taxDeferredStart;
     let taxFreeBalance = taxFreeStart;
-    let taxableBalance = taxableStart;
-    let taxableCostBasis = taxableStart;
+    let brokerageBalance = brokerageStart;
+    let savingsBalance = savingsStart;
+    let brokerageCostBasis = brokerageStart;
     
     let taxDeferredTotalContributions = 0;
     let taxFreeTotalContributions = 0;
-    let taxableTotalContributions = 0;
+    let brokerageTotalContributions = 0;
+    let savingsTotalContributions = 0;
     
     let taxDeferredTotalWithdrawals = 0;
     let taxFreeTotalWithdrawals = 0;
-    let taxableTotalWithdrawals = 0;
+    let brokerageTotalWithdrawals = 0;
+    let savingsTotalWithdrawals = 0;
     
     let totalYears = 0;
     
@@ -326,15 +347,19 @@ function calculateGrowth(event) {
         const taxFreeContribution = parseFloat(document.getElementById(`taxFree-${periodId}`).value);
         const taxFreeWithdrawal = parseFloat(document.getElementById(`taxFreeWithdrawal-${periodId}`).value);
         const taxFreeLumpSum = parseFloat(document.getElementById(`taxFreeLumpSum-${periodId}`).value) || 0;
-        const taxableContribution = parseFloat(document.getElementById(`taxable-${periodId}`).value);
-        const taxableWithdrawal = parseFloat(document.getElementById(`taxableWithdrawal-${periodId}`).value);
-        const taxableLumpSum = parseFloat(document.getElementById(`taxableLumpSum-${periodId}`).value) || 0;
+        const brokerageContribution = parseFloat(document.getElementById(`brokerage-${periodId}`).value);
+        const brokerageWithdrawal = parseFloat(document.getElementById(`brokerageWithdrawal-${periodId}`).value);
+        const brokerageLumpSum = parseFloat(document.getElementById(`brokerageLumpSum-${periodId}`).value) || 0;
+        const savingsContribution = parseFloat(document.getElementById(`savings-${periodId}`).value);
+        const savingsWithdrawal = parseFloat(document.getElementById(`savingsWithdrawal-${periodId}`).value);
+        const savingsLumpSum = parseFloat(document.getElementById(`savingsLumpSum-${periodId}`).value) || 0;
         
         // Add lump sums at the start of the period
         taxDeferredBalance += taxDeferredLumpSum;
         taxFreeBalance += taxFreeLumpSum;
-        taxableBalance += taxableLumpSum;
-        taxableCostBasis += taxableLumpSum;
+        brokerageBalance += brokerageLumpSum;
+        savingsBalance += savingsLumpSum;
+        brokerageCostBasis += brokerageLumpSum;
         
         // Calculate growth for tax-deferred account
         const taxDeferredResult = calculateCompoundGrowth(
@@ -362,20 +387,33 @@ function calculateGrowth(event) {
         taxFreeTotalContributions += taxFreeResult.totalContributions;
         taxFreeTotalWithdrawals += taxFreeResult.totalWithdrawals;
         
-        // Calculate growth for taxable account
-        const taxableResult = calculateCompoundGrowth(
-            taxableBalance,
-            taxableContribution,
-            taxableWithdrawal,
-            taxableRate,
+        // Calculate growth for bucket 3 brokerage account
+        const brokerageResult = calculateCompoundGrowth(
+            brokerageBalance,
+            brokerageContribution,
+            brokerageWithdrawal,
+            brokerageRate,
             duration,
             compoundFrequency,
-            taxableCostBasis
+            brokerageCostBasis
         );
-        taxableBalance = taxableResult.finalBalance;
-        taxableTotalContributions += taxableResult.totalContributions;
-        taxableTotalWithdrawals += taxableResult.totalWithdrawals;
-        taxableCostBasis = taxableResult.finalCostBasis;
+        brokerageBalance = brokerageResult.finalBalance;
+        brokerageTotalContributions += brokerageResult.totalContributions;
+        brokerageTotalWithdrawals += brokerageResult.totalWithdrawals;
+        brokerageCostBasis = brokerageResult.finalCostBasis;
+
+        // Calculate growth for bucket 3 savings account
+        const savingsResult = calculateCompoundGrowth(
+            savingsBalance,
+            savingsContribution,
+            savingsWithdrawal,
+            savingsRate,
+            duration,
+            compoundFrequency
+        );
+        savingsBalance = savingsResult.finalBalance;
+        savingsTotalContributions += savingsResult.totalContributions;
+        savingsTotalWithdrawals += savingsResult.totalWithdrawals;
         
         totalYears += duration;
         
@@ -384,18 +422,21 @@ function calculateGrowth(event) {
         // (tax-deferred contributions reduce taxable income since they're pre-tax)
         const taxableMonthlyIncome = grossIncome - taxDeferredContribution + taxDeferredWithdrawal;
 
-        // Taxable account gains realized by withdrawals are treated as long-term capital gains.
+        // Brokerage gains realized by withdrawals are treated as long-term capital gains.
         const annualLongTermCapitalGains = duration > 0
-            ? taxableResult.realizedLongTermCapitalGains / duration
+            ? brokerageResult.realizedLongTermCapitalGains / duration
             : 0;
         // Tax-free income = tax-free withdrawals
         const taxFreeMonthlyIncome = taxFreeWithdrawal;
-        const totalMonthlyIncome = taxableMonthlyIncome + taxFreeMonthlyIncome;
+        const annualBrokerageWithdrawal = duration > 0 ? brokerageResult.totalWithdrawals / duration : 0;
+        const annualSavingsWithdrawal = duration > 0 ? savingsResult.totalWithdrawals / duration : 0;
+        const annualTaxFreeIncome = taxFreeMonthlyIncome * 12;
+        const annualNonTaxableBucket3Income = (annualBrokerageWithdrawal - annualLongTermCapitalGains) + annualSavingsWithdrawal;
+        const totalMonthlyIncome = taxableMonthlyIncome + taxFreeMonthlyIncome + (annualNonTaxableBucket3Income / 12);
         
         // Calculate yearly take-home pay
         const annualOrdinaryTaxableIncome = taxableMonthlyIncome * 12;
         const annualTaxableIncome = annualOrdinaryTaxableIncome + annualLongTermCapitalGains;
-        const annualTaxFreeIncome = taxFreeMonthlyIncome * 12;
         const federalTax = calculateFederalTax(annualOrdinaryTaxableIncome);
         const federalLongTermCapitalGainsTax = calculateLongTermCapitalGainsTax(
             annualOrdinaryTaxableIncome,
@@ -404,7 +445,9 @@ function calculateGrowth(event) {
         const marylandStateTax = calculateMarylandStateTax(annualTaxableIncome);
         const frederickCountyTax = calculateFrederickCountyTax(annualTaxableIncome);
         const totalTax = federalTax + federalLongTermCapitalGainsTax + marylandStateTax + frederickCountyTax;
-        const yearlyTakeHome = (annualTaxableIncome - totalTax) + annualTaxFreeIncome;
+        const yearlyTakeHome = (annualTaxableIncome + annualTaxFreeIncome + annualNonTaxableBucket3Income) - totalTax;
+
+        const taxableBalance = brokerageBalance + savingsBalance;
         
         // Store period results
         periodResults.push({
@@ -423,9 +466,15 @@ function calculateGrowth(event) {
         });
     });
     
+    const taxableBalance = brokerageBalance + savingsBalance;
+    const taxableTotalContributions = brokerageTotalContributions + savingsTotalContributions;
+    const taxableTotalWithdrawals = brokerageTotalWithdrawals + savingsTotalWithdrawals;
+
     // Calculate growth (final balance - starting balance - contributions + withdrawals)
     const taxDeferredGrowth = taxDeferredBalance - taxDeferredStart - taxDeferredTotalContributions + taxDeferredTotalWithdrawals;
     const taxFreeGrowth = taxFreeBalance - taxFreeStart - taxFreeTotalContributions + taxFreeTotalWithdrawals;
+    const brokerageGrowth = brokerageBalance - brokerageStart - brokerageTotalContributions + brokerageTotalWithdrawals;
+    const savingsGrowth = savingsBalance - savingsStart - savingsTotalContributions + savingsTotalWithdrawals;
     const taxableGrowth = taxableBalance - taxableStart - taxableTotalContributions + taxableTotalWithdrawals;
     
     // Display results
@@ -449,7 +498,15 @@ function calculateGrowth(event) {
             start: taxableStart,
             contributions: taxableTotalContributions,
             withdrawals: taxableTotalWithdrawals,
-            growth: taxableGrowth
+            growth: taxableGrowth,
+            brokerage: {
+                final: brokerageBalance,
+                growth: brokerageGrowth
+            },
+            savings: {
+                final: savingsBalance,
+                growth: savingsGrowth
+            }
         },
         totalYears: totalYears,
         periodResults: periodResults
@@ -488,6 +545,10 @@ function displayResults(results) {
     document.getElementById('taxableContributions').textContent = formatCurrency(results.taxable.contributions);
     document.getElementById('taxableWithdrawals').textContent = formatCurrency(results.taxable.withdrawals);
     document.getElementById('taxableGrowth').textContent = formatCurrency(results.taxable.growth);
+    document.getElementById('brokerageResult').textContent = formatCurrency(results.taxable.brokerage.final);
+    document.getElementById('brokerageGrowth').textContent = formatCurrency(results.taxable.brokerage.growth);
+    document.getElementById('savingsResult').textContent = formatCurrency(results.taxable.savings.final);
+    document.getElementById('savingsGrowth').textContent = formatCurrency(results.taxable.savings.growth);
     
     // Total results
     const totalFinal = results.taxDeferred.final + results.taxFree.final + results.taxable.final;
