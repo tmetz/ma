@@ -134,8 +134,10 @@ function toggleLumpSum(periodId) {
 }
 
 // Calculate compound growth with monthly contributions and withdrawals
-function calculateCompoundGrowth(principal, monthlyContribution, monthlyWithdrawal, annualRate, years, compoundFrequency) {
-    const netMonthlyAmount = monthlyContribution - monthlyWithdrawal;
+function calculateCompoundGrowth(principal, monthlyContribution, monthlyWithdrawal, annualRate, years, compoundFrequency, initialCostBasis = null) {
+    const trackCostBasis = typeof initialCostBasis === 'number';
+    let costBasis = trackCostBasis ? initialCostBasis : 0;
+    let realizedLongTermCapitalGains = 0;
     
     if (compoundFrequency === 'annually') {
         // Annual compounding
@@ -145,12 +147,32 @@ function calculateCompoundGrowth(principal, monthlyContribution, monthlyWithdraw
         let totalWithdrawals = 0;
         
         for (let year = 0; year < years; year++) {
-            // Add annual contributions and withdrawals (12 months worth)
+            // Add annual contribution first.
             const yearlyContribution = monthlyContribution * 12;
             const yearlyWithdrawal = monthlyWithdrawal * 12;
-            balance += yearlyContribution - yearlyWithdrawal;
+            balance += yearlyContribution;
             totalContributions += yearlyContribution;
-            totalWithdrawals += yearlyWithdrawal;
+
+            if (trackCostBasis) {
+                costBasis += yearlyContribution;
+
+                // For taxable accounts, taxable gains can only be realized from existing invested balance.
+                const availableBalance = Math.max(0, balance);
+                const withdrawalAppliedForTax = Math.min(yearlyWithdrawal, availableBalance);
+                const gainRatio = availableBalance > 0
+                    ? Math.max(0, (availableBalance - costBasis) / availableBalance)
+                    : 0;
+                const realizedGains = withdrawalAppliedForTax * gainRatio;
+                const basisReduction = withdrawalAppliedForTax - realizedGains;
+
+                realizedLongTermCapitalGains += realizedGains;
+                costBasis = Math.max(0, costBasis - basisReduction);
+                balance -= yearlyWithdrawal;
+                totalWithdrawals += yearlyWithdrawal;
+            } else {
+                balance -= yearlyWithdrawal;
+                totalWithdrawals += yearlyWithdrawal;
+            }
             
             // Apply annual growth
             balance *= (1 + rate);
@@ -161,18 +183,45 @@ function calculateCompoundGrowth(principal, monthlyContribution, monthlyWithdraw
         if (fractionalYear > 0) {
             const partialYearContribution = monthlyContribution * 12 * fractionalYear;
             const partialYearWithdrawal = monthlyWithdrawal * 12 * fractionalYear;
-            balance += partialYearContribution - partialYearWithdrawal;
+            balance += partialYearContribution;
             totalContributions += partialYearContribution;
-            totalWithdrawals += partialYearWithdrawal;
+
+            if (trackCostBasis) {
+                costBasis += partialYearContribution;
+
+                const availableBalance = Math.max(0, balance);
+                const withdrawalAppliedForTax = Math.min(partialYearWithdrawal, availableBalance);
+                const gainRatio = availableBalance > 0
+                    ? Math.max(0, (availableBalance - costBasis) / availableBalance)
+                    : 0;
+                const realizedGains = withdrawalAppliedForTax * gainRatio;
+                const basisReduction = withdrawalAppliedForTax - realizedGains;
+
+                realizedLongTermCapitalGains += realizedGains;
+                costBasis = Math.max(0, costBasis - basisReduction);
+                balance -= partialYearWithdrawal;
+                totalWithdrawals += partialYearWithdrawal;
+            } else {
+                balance -= partialYearWithdrawal;
+                totalWithdrawals += partialYearWithdrawal;
+            }
+
             balance *= Math.pow(1 + rate, fractionalYear);
         }
-        
-        return {
+
+        const result = {
             finalBalance: balance,
             totalContributions: totalContributions,
             totalWithdrawals: totalWithdrawals,
             growth: balance - principal - totalContributions + totalWithdrawals
         };
+
+        if (trackCostBasis) {
+            result.finalCostBasis = Math.max(0, Math.min(costBasis, balance));
+            result.realizedLongTermCapitalGains = realizedLongTermCapitalGains;
+        }
+
+        return result;
     } else {
         // Monthly compounding (default)
         const monthlyRate = annualRate / 100 / 12;
@@ -183,21 +232,47 @@ function calculateCompoundGrowth(principal, monthlyContribution, monthlyWithdraw
         let totalWithdrawals = 0;
         
         for (let month = 0; month < months; month++) {
-            // Add monthly contribution and subtract withdrawal
-            balance += monthlyContribution - monthlyWithdrawal;
+            // Add monthly contribution first.
+            balance += monthlyContribution;
             totalContributions += monthlyContribution;
-            totalWithdrawals += monthlyWithdrawal;
+
+            if (trackCostBasis) {
+                costBasis += monthlyContribution;
+
+                const availableBalance = Math.max(0, balance);
+                const withdrawalAppliedForTax = Math.min(monthlyWithdrawal, availableBalance);
+                const gainRatio = availableBalance > 0
+                    ? Math.max(0, (availableBalance - costBasis) / availableBalance)
+                    : 0;
+                const realizedGains = withdrawalAppliedForTax * gainRatio;
+                const basisReduction = withdrawalAppliedForTax - realizedGains;
+
+                realizedLongTermCapitalGains += realizedGains;
+                costBasis = Math.max(0, costBasis - basisReduction);
+                balance -= monthlyWithdrawal;
+                totalWithdrawals += monthlyWithdrawal;
+            } else {
+                balance -= monthlyWithdrawal;
+                totalWithdrawals += monthlyWithdrawal;
+            }
             
             // Apply monthly growth
             balance *= (1 + monthlyRate);
         }
-        
-        return {
+
+        const result = {
             finalBalance: balance,
             totalContributions: totalContributions,
             totalWithdrawals: totalWithdrawals,
             growth: balance - principal - totalContributions + totalWithdrawals
         };
+
+        if (trackCostBasis) {
+            result.finalCostBasis = Math.max(0, Math.min(costBasis, balance));
+            result.realizedLongTermCapitalGains = realizedLongTermCapitalGains;
+        }
+
+        return result;
     }
 }
 
@@ -254,12 +329,6 @@ function calculateGrowth(event) {
         const taxableContribution = parseFloat(document.getElementById(`taxable-${periodId}`).value);
         const taxableWithdrawal = parseFloat(document.getElementById(`taxableWithdrawal-${periodId}`).value);
         const taxableLumpSum = parseFloat(document.getElementById(`taxableLumpSum-${periodId}`).value) || 0;
-
-        // Estimate taxable account gain ratio before this period's cash flows.
-        // This is used to estimate what share of taxable withdrawals is long-term gain.
-        const taxableGainRatio = taxableBalance > 0
-            ? Math.max(0, (taxableBalance - taxableCostBasis) / taxableBalance)
-            : 0;
         
         // Add lump sums at the start of the period
         taxDeferredBalance += taxDeferredLumpSum;
@@ -300,16 +369,13 @@ function calculateGrowth(event) {
             taxableWithdrawal,
             taxableRate,
             duration,
-            compoundFrequency
+            compoundFrequency,
+            taxableCostBasis
         );
         taxableBalance = taxableResult.finalBalance;
         taxableTotalContributions += taxableResult.totalContributions;
         taxableTotalWithdrawals += taxableResult.totalWithdrawals;
-
-        // Update estimated taxable account cost basis after this period.
-        const taxableWithdrawalBasisPortion = taxableResult.totalWithdrawals * (1 - taxableGainRatio);
-        taxableCostBasis += taxableResult.totalContributions - taxableWithdrawalBasisPortion;
-        taxableCostBasis = Math.max(0, Math.min(taxableCostBasis, taxableBalance));
+        taxableCostBasis = taxableResult.finalCostBasis;
         
         totalYears += duration;
         
@@ -318,8 +384,10 @@ function calculateGrowth(event) {
         // (tax-deferred contributions reduce taxable income since they're pre-tax)
         const taxableMonthlyIncome = grossIncome - taxDeferredContribution + taxDeferredWithdrawal;
 
-        // Estimate taxable account withdrawal gains and treat them as long-term capital gains.
-        const annualLongTermCapitalGains = (taxableWithdrawal * 12) * taxableGainRatio;
+        // Taxable account gains realized by withdrawals are treated as long-term capital gains.
+        const annualLongTermCapitalGains = duration > 0
+            ? taxableResult.realizedLongTermCapitalGains / duration
+            : 0;
         // Tax-free income = tax-free withdrawals
         const taxFreeMonthlyIncome = taxFreeWithdrawal;
         const totalMonthlyIncome = taxableMonthlyIncome + taxFreeMonthlyIncome;
