@@ -568,6 +568,85 @@ function calculateCompoundGrowth(principal, monthlyContribution, monthlyWithdraw
     }
 }
 
+// Calculate yearly snapshots for a single period (used for expandable rows)
+function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActive, startRmdAge = 75) {
+    const yearlyDetails = [];
+    let taxDeferredBal = startingBalances.taxDeferred + (periodData.taxDeferredLumpSum || 0);
+    let taxFreeBal = startingBalances.taxFree + (periodData.taxFreeLumpSum || 0);
+    let brokerageBal = startingBalances.brokerage + (periodData.brokerageLumpSum || 0);
+    let savingsBal = startingBalances.savings + (periodData.savingsLumpSum || 0);
+    let brokerageCostBasis = startingBalances.brokerageCostBasis + (periodData.brokerageLumpSum || 0);
+    
+    const years = Math.ceil(periodData.duration);
+    let currentAge = startRmdAge;
+    
+    for (let year = 1; year <= years; year++) {
+        // Only calculate full years, skip if we've exceeded the duration
+        if (year - 1 >= Math.floor(periodData.duration) && year > Math.ceil(periodData.duration)) break;
+        
+        // For the last partial year, adjust to the actual fractional amount
+        const yearFraction = year <= Math.floor(periodData.duration) ? 1 : (periodData.duration - Math.floor(periodData.duration));
+        
+        // Annual amounts
+        const yearlyTaxDeferredContribution = periodData.taxDeferredContribution * 12 * yearFraction;
+        const yearlyTaxDeferredWithdrawal = periodData.taxDeferredWithdrawal * 12 * yearFraction;
+        const yearlyTaxFreeContribution = periodData.taxFreeContribution * 12 * yearFraction;
+        const yearlyTaxFreeWithdrawal = periodData.taxFreeWithdrawal * 12 * yearFraction;
+        const yearlyBrokerageContribution = periodData.brokerageContribution * 12 * yearFraction;
+        const yearlyBrokerageWithdrawal = periodData.brokerageWithdrawal * 12 * yearFraction;
+        const yearlySavingsContribution = periodData.savingsContribution * 12 * yearFraction;
+        const yearlySavingsWithdrawal = periodData.savingsWithdrawal * 12 * yearFraction;
+        
+        // Update balances with contributions and withdrawals
+        taxDeferredBal += yearlyTaxDeferredContribution - yearlyTaxDeferredWithdrawal;
+        taxFreeBal += yearlyTaxFreeContribution - yearlyTaxFreeWithdrawal;
+        
+        // Brokerage gain calculation
+        const annualRate = rates.brokerage / 100;
+        const brokerageGain = brokerageBal * annualRate;
+        brokerageCostBasis = Math.max(0, Math.min(brokerageCostBasis, brokerageBal + brokerageGain));
+        const gainRatio = (brokerageBal + brokerageGain) > 0
+            ? Math.max(0, brokerageGain / (brokerageBal + brokerageGain))
+            : 0;
+        const realizedGains = yearlyBrokerageWithdrawal * gainRatio;
+        brokerageCostBasis -= Math.max(0, yearlyBrokerageWithdrawal - realizedGains);
+        brokerageBal += brokerageGain + yearlyBrokerageContribution - yearlyBrokerageWithdrawal;
+        
+        // Savings account (no gains calculated in this model)
+        savingsBal += yearlySavingsContribution - yearlySavingsWithdrawal;
+        
+        // Apply growth
+        const taxDeferredGrowth = taxDeferredBal * (rates.taxDeferred / 100);
+        const taxFreeGrowth = taxFreeBal * (rates.taxFree / 100);
+        const savingsGrowth = savingsBal * (rates.savings / 100);
+        
+        taxDeferredBal += taxDeferredGrowth;
+        taxFreeBal += taxFreeGrowth;
+        savingsBal += savingsGrowth;
+        
+        // Calculate RMD for this year if active
+        let yearlyRmd = null;
+        if (rmdActive) {
+            const divisor = getRmdDivisor(currentAge);
+            yearlyRmd = taxDeferredBal / divisor;
+            currentAge++;
+        }
+        
+        yearlyDetails.push({
+            year: year,
+            age: currentAge - 1,
+            taxDeferred: taxDeferredBal,
+            taxFree: taxFreeBal,
+            brokerage: brokerageBal,
+            savings: savingsBal,
+            total: taxDeferredBal + taxFreeBal + brokerageBal + savingsBal,
+            rmd: yearlyRmd
+        });
+    }
+    
+    return yearlyDetails;
+}
+
 // Main calculation function
 function calculateGrowth(event) {
     event.preventDefault();
@@ -635,6 +714,10 @@ function calculateGrowth(event) {
         const savingsLumpSum = parseFloat(document.getElementById(`savingsLumpSum-${periodId}`).value) || 0;
         
         const openingTaxDeferredBalance = taxDeferredBalance;
+        const openingTaxFreeBalance = taxFreeBalance;
+        const openingBrokerageBalance = brokerageBalance;
+        const openingSavingsBalance = savingsBalance;
+        const openingBrokerageCostBasis = brokerageCostBasis;
 
         if (beginRmdInThisPeriod && !rmdActive) {
             rmdActive = true;
@@ -760,6 +843,7 @@ function calculateGrowth(event) {
         }
         
         // Store period results
+        const yearlyRmdAgeAtStart = currentRmdAge;
         periodResults.push({
             periodNumber: periodResults.length + 1,
             periodName: periodName,
@@ -776,7 +860,38 @@ function calculateGrowth(event) {
             yearlyRmdMax: maxAnnualRmd,
             rmdShortfall: rmdShortfall,
             totalIncome: totalMonthlyIncome,
-            yearlyTakeHome: yearlyTakeHome
+            yearlyTakeHome: yearlyTakeHome,
+            // Data needed for yearly calculations
+            periodData: {
+                taxDeferredContribution: taxDeferredContribution,
+                taxDeferredWithdrawal: taxDeferredWithdrawal,
+                taxDeferredLumpSum: taxDeferredLumpSum,
+                taxFreeContribution: taxFreeContribution,
+                taxFreeWithdrawal: taxFreeWithdrawal,
+                taxFreeLumpSum: taxFreeLumpSum,
+                brokerageContribution: brokerageContribution,
+                brokerageWithdrawal: brokerageWithdrawal,
+                brokerageLumpSum: brokerageLumpSum,
+                savingsContribution: savingsContribution,
+                savingsWithdrawal: savingsWithdrawal,
+                savingsLumpSum: savingsLumpSum,
+                duration: duration
+            },
+            startingBalances: {
+                taxDeferred: openingTaxDeferredBalance,
+                taxFree: openingTaxFreeBalance,
+                brokerage: openingBrokerageBalance,
+                savings: openingSavingsBalance,
+                brokerageCostBasis: openingBrokerageCostBasis
+            },
+            rates: {
+                taxDeferred: taxDeferredRate,
+                taxFree: taxFreeRate,
+                brokerage: brokerageRate,
+                savings: savingsRate
+            },
+            rmdActive: rmdActive,
+            rmdAgeAtStart: yearlyRmdAgeAtStart
         });
     });
     
@@ -888,8 +1003,96 @@ function displayResults(results) {
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// Store period results globally so we can access them for expanding
+let globalPeriodResults = [];
+
+// Toggle yearly details for a period
+function togglePeriodDetails(periodIndex) {
+    const period = globalPeriodResults[periodIndex];
+    const detailsRow = document.querySelector(`.yearly-details-row[data-period-index="${periodIndex}"]`);
+    const expandBtn = document.querySelector(`.period-row[data-period-index="${periodIndex}"] .expand-btn`);
+    
+    if (detailsRow.classList.contains('hidden')) {
+        // Expand
+        detailsRow.classList.remove('hidden');
+        expandBtn.textContent = '▼';
+        
+        // Render yearly details if not already rendered
+        const container = document.getElementById(`yearly-details-${periodIndex}`);
+        if (container.innerHTML === '<!-- Yearly details will be loaded here -->') {
+            renderYearlyDetails(periodIndex, period, container);
+        }
+    } else {
+        // Collapse
+        detailsRow.classList.add('hidden');
+        expandBtn.textContent = '▶';
+    }
+}
+
+// Render yearly details table
+function renderYearlyDetails(periodIndex, period, container) {
+    const yearlyDetails = getYearlyDetailsForPeriod(
+        period.periodData,
+        period.startingBalances,
+        period.rates,
+        period.rmdActive,
+        period.rmdAgeAtStart
+    );
+    
+    let tableHTML = `
+        <table class="yearly-details-table">
+            <thead>
+                <tr>
+                    <th>Year</th>
+                    <th class="amount">Age</th>
+                    <th class="amount">Tax-Deferred</th>
+                    <th class="amount">Tax-Free</th>
+                    <th class="amount">Brokerage</th>
+                    <th class="amount">Savings</th>
+                    <th class="amount">Total Balance</th>
+                    <th class="amount">RMD Required</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    };
+    
+    yearlyDetails.forEach(year => {
+        const rmdDisplay = year.rmd === null ? '—' : formatCurrency(year.rmd);
+        tableHTML += `
+            <tr>
+                <td class="year-cell">${year.year}</td>
+                <td class="amount">${year.age}</td>
+                <td class="amount">${formatCurrency(year.taxDeferred)}</td>
+                <td class="amount">${formatCurrency(year.taxFree)}</td>
+                <td class="amount">${formatCurrency(year.brokerage)}</td>
+                <td class="amount">${formatCurrency(year.savings)}</td>
+                <td class="amount"><strong>${formatCurrency(year.total)}</strong></td>
+                <td class="amount">${rmdDisplay}</td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    container.innerHTML = tableHTML;
+}
+
 // Display period-by-period results
 function displayPeriodResults(periodResults, formatCurrency) {
+    // Store globally for access in toggle function
+    globalPeriodResults = periodResults;
     const tableContainer = document.getElementById('periodResultsTable');
     
     if (periodResults.length === 0) {
@@ -901,6 +1104,7 @@ function displayPeriodResults(periodResults, formatCurrency) {
         <table class="period-table">
             <thead>
                 <tr>
+                    <th style="width: 30px;"></th>
                     <th>Period</th>
                     <th class="amount">Cumulative Years</th>
                     <th class="amount">Tax-Deferred</th>
@@ -914,7 +1118,7 @@ function displayPeriodResults(periodResults, formatCurrency) {
             <tbody>
     `;
     
-    periodResults.forEach(period => {
+    periodResults.forEach((period, index) => {
         const rmdDisplay = period.yearlyRmd === null ? '—' : formatCurrency(period.yearlyRmd);
         const rmdTooltip = period.yearlyRmd === null
             ? ''
@@ -923,7 +1127,8 @@ function displayPeriodResults(periodResults, formatCurrency) {
         const takeHomeTooltip = `Taxable Income: ${formatCurrency(period.yearlyTaxableIncome)} | Tax-Free Income: ${formatCurrency(period.yearlyTaxFreeIncome)}`;
 
         tableHTML += `
-            <tr>
+            <tr class="period-row" data-period-index="${index}">
+                <td class="expand-cell"><button class="expand-btn" onclick="togglePeriodDetails(${index})" title="Expand to see yearly details">▶</button></td>
                 <td class="period-cell">
                     <div class="period-name">${period.periodName}</div>
                     <div class="period-duration">(${period.duration.toFixed(1)} years)</div>
@@ -935,6 +1140,13 @@ function displayPeriodResults(periodResults, formatCurrency) {
                 <td class="amount"><div><strong>${formatCurrency(period.total)}</strong></div><div></div></td>
                 <td class="amount rmd-column ${period.rmdShortfall ? 'rmd-warning' : ''}"><div${rmdTooltip}>${rmdDisplay}</div><div></div></td>
                 <td class="amount income-column"><div title="${takeHomeTooltip}"><strong>${formatCurrency(period.yearlyTakeHome)}</strong></div><div></div></td>
+            </tr>
+            <tr class="yearly-details-row hidden" data-period-index="${index}">
+                <td colspan="9">
+                    <div class="yearly-details-container" id="yearly-details-${index}">
+                        <!-- Yearly details will be loaded here -->
+                    </div>
+                </td>
             </tr>
         `;
     });
