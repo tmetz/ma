@@ -1012,6 +1012,13 @@ function togglePeriodDetails(periodIndex) {
     const detailsRow = document.querySelector(`.yearly-details-row[data-period-index="${periodIndex}"]`);
     const expandBtn = document.querySelector(`.period-row[data-period-index="${periodIndex}"] .expand-btn`);
     
+    console.log('togglePeriodDetails called', periodIndex, { period, detailsRow, expandBtn, globalPeriodResults });
+    
+    if (!detailsRow) {
+        console.error('detailsRow not found');
+        return;
+    }
+    
     if (detailsRow.classList.contains('hidden')) {
         // Expand
         detailsRow.classList.remove('hidden');

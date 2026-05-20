@@ -722,25 +722,20 @@ footer a:hover {
     transform: scale(1.2);
 }
 
-.yearly-details-row {
-    display: none;
-}
-
 .yearly-details-row.hidden {
-    display: none;
+    display: none !important;
 }
-
-.yearly-details-row td {
-    padding: 0;
+.yearly-details-row:not(.hidden) {
+    display: table-row !important;
 }
-
 .yearly-details-container {
+/* Expandable period details */
     padding: 20px;
     background-color: rgba(37, 99, 235, 0.02);
     border-left: 4px solid var(--primary-color);
 }
-
 .yearly-details-table {
+/* Expandable period details */
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
