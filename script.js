@@ -634,7 +634,7 @@ function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActiv
         
         yearlyDetails.push({
             year: year,
-            age: currentAge - 1,
+            age: rmdActive ? (currentAge - 1) : null,
             taxDeferred: taxDeferredBal,
             taxFree: taxFreeBal,
             brokerage: brokerageBal,
@@ -838,12 +838,12 @@ function calculateGrowth(event) {
 
         const taxableBalance = brokerageBalance + savingsBalance;
 
+        // Capture the starting age for this period's yearly breakdown BEFORE advancing
+        const yearlyRmdAgeAtStart = currentRmdAge;
+
         if (rmdActive && rmdRequirements) {
             currentRmdAge += rmdRequirements.yearsEvaluated;
         }
-        
-        // Store period results
-        const yearlyRmdAgeAtStart = currentRmdAge;
         periodResults.push({
             periodNumber: periodResults.length + 1,
             periodName: periodName,
@@ -1042,18 +1042,22 @@ function renderYearlyDetails(periodIndex, period, container) {
         period.rmdAgeAtStart
     );
     
+    const hasRmd = period.rmdActive;
+    const ageCol = hasRmd ? '<th class="amount">Age</th>' : '';
+    const rmdCol = hasRmd ? '<th class="amount">RMD Required</th>' : '';
+
     let tableHTML = `
         <table class="yearly-details-table">
             <thead>
                 <tr>
                     <th>Year</th>
-                    <th class="amount">Age</th>
+                    ${ageCol}
                     <th class="amount">Tax-Deferred</th>
                     <th class="amount">Tax-Free</th>
                     <th class="amount">Brokerage</th>
                     <th class="amount">Savings</th>
                     <th class="amount">Total Balance</th>
-                    <th class="amount">RMD Required</th>
+                    ${rmdCol}
                 </tr>
             </thead>
             <tbody>
@@ -1069,17 +1073,18 @@ function renderYearlyDetails(periodIndex, period, container) {
     };
     
     yearlyDetails.forEach(year => {
-        const rmdDisplay = year.rmd === null ? '—' : formatCurrency(year.rmd);
+        const ageCell = hasRmd ? `<td class="amount">${year.age}</td>` : '';
+        const rmdCell = hasRmd ? `<td class="amount">${year.rmd === null ? '—' : formatCurrency(year.rmd)}</td>` : '';
         tableHTML += `
             <tr>
                 <td class="year-cell">${year.year}</td>
-                <td class="amount">${year.age}</td>
+                ${ageCell}
                 <td class="amount">${formatCurrency(year.taxDeferred)}</td>
                 <td class="amount">${formatCurrency(year.taxFree)}</td>
                 <td class="amount">${formatCurrency(year.brokerage)}</td>
                 <td class="amount">${formatCurrency(year.savings)}</td>
                 <td class="amount"><strong>${formatCurrency(year.total)}</strong></td>
-                <td class="amount">${rmdDisplay}</td>
+                ${rmdCell}
             </tr>
         `;
     });
