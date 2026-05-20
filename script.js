@@ -434,7 +434,7 @@ function calculateGrowth(event) {
         // Calculate income breakdown
         // Taxable ordinary income = gross income - tax-deferred contributions + tax-deferred withdrawals
         // (tax-deferred contributions reduce taxable income since they're pre-tax)
-        const taxableMonthlyIncome = grossIncome - taxDeferredContribution + taxDeferredWithdrawal;
+        const taxableMonthlyIncome = Math.max(0, grossIncome - taxDeferredContribution + taxDeferredWithdrawal);
 
         // Brokerage gains realized by withdrawals are treated as long-term capital gains.
         const annualLongTermCapitalGains = duration > 0
