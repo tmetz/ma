@@ -61,7 +61,9 @@ function getRmdDivisor(age) {
 function calculateRmdPeriodRequirements(startingBalance, monthlyContribution, monthlyWithdrawal, annualRate, durationYears, compoundFrequency, startingAge) {
     if (durationYears <= 0) {
         return {
+            minAnnualRmd: 0,
             maxAnnualRmd: 0,
+            averageAnnualRmd: 0,
             annualRmds: [],
             yearsEvaluated: 0
         };
@@ -73,14 +75,18 @@ function calculateRmdPeriodRequirements(startingBalance, monthlyContribution, mo
 
     let runningBalance = startingBalance;
     let currentAge = startingAge;
+    let minAnnualRmd = Number.POSITIVE_INFINITY;
     let maxAnnualRmd = 0;
+    let totalAnnualRmd = 0;
     const annualRmds = [];
 
     for (let yearIndex = 0; yearIndex < yearsEvaluated; yearIndex++) {
         const divisor = getRmdDivisor(currentAge);
         const annualRmd = Math.max(0, runningBalance / divisor);
         annualRmds.push(annualRmd);
+        minAnnualRmd = Math.min(minAnnualRmd, annualRmd);
         maxAnnualRmd = Math.max(maxAnnualRmd, annualRmd);
+        totalAnnualRmd += annualRmd;
 
         const isFinalPartialYear = yearIndex === yearsEvaluated - 1 && fractionalYear > 0;
         const segmentYears = isFinalPartialYear ? fractionalYear : 1;
@@ -96,7 +102,9 @@ function calculateRmdPeriodRequirements(startingBalance, monthlyContribution, mo
     }
 
     return {
+        minAnnualRmd: minAnnualRmd === Number.POSITIVE_INFINITY ? 0 : minAnnualRmd,
         maxAnnualRmd: maxAnnualRmd,
+        averageAnnualRmd: yearsEvaluated > 0 ? totalAnnualRmd / yearsEvaluated : 0,
         annualRmds: annualRmds,
         yearsEvaluated: yearsEvaluated
     };
@@ -505,7 +513,9 @@ function calculateGrowth(event) {
                 currentRmdAge
             )
             : null;
-        const annualRmd = rmdRequirements ? rmdRequirements.maxAnnualRmd : null;
+        const averageAnnualRmd = rmdRequirements ? rmdRequirements.averageAnnualRmd : null;
+        const minAnnualRmd = rmdRequirements ? rmdRequirements.minAnnualRmd : null;
+        const maxAnnualRmd = rmdRequirements ? rmdRequirements.maxAnnualRmd : null;
         const rmdShortfall = rmdRequirements
             ? annualTaxDeferredWithdrawalPlanned + 0.01 < rmdRequirements.maxAnnualRmd
             : false;
@@ -614,7 +624,9 @@ function calculateGrowth(event) {
             total: taxDeferredBalance + taxFreeBalance + taxableBalance,
             yearlyTaxableIncome: annualTaxableIncome,
             yearlyTaxFreeIncome: annualTaxFreeIncome,
-            yearlyRmd: annualRmd,
+            yearlyRmd: averageAnnualRmd,
+            yearlyRmdMin: minAnnualRmd,
+            yearlyRmdMax: maxAnnualRmd,
             rmdShortfall: rmdShortfall,
             totalIncome: totalMonthlyIncome,
             yearlyTakeHome: yearlyTakeHome
@@ -758,6 +770,11 @@ function displayPeriodResults(periodResults, formatCurrency) {
     `;
     
     periodResults.forEach(period => {
+        const rmdDisplay = period.yearlyRmd === null ? '—' : formatCurrency(period.yearlyRmd);
+        const rmdTooltip = period.yearlyRmd === null
+            ? ''
+            : ` title="Min: ${formatCurrency(period.yearlyRmdMin)} | Max: ${formatCurrency(period.yearlyRmdMax)}"`;
+
         tableHTML += `
             <tr>
                 <td class="period-cell">
@@ -771,7 +788,7 @@ function displayPeriodResults(periodResults, formatCurrency) {
                 <td class="amount"><div><strong>${formatCurrency(period.total)}</strong></div><div></div></td>
                 <td class="amount income-column"><div>${formatCurrency(period.yearlyTaxableIncome)}</div><div></div></td>
                 <td class="amount income-column"><div>${formatCurrency(period.yearlyTaxFreeIncome)}</div><div></div></td>
-                <td class="amount rmd-column ${period.rmdShortfall ? 'rmd-warning' : ''}"><div>${period.yearlyRmd === null ? '—' : formatCurrency(period.yearlyRmd)}</div><div></div></td>
+                <td class="amount rmd-column ${period.rmdShortfall ? 'rmd-warning' : ''}"><div${rmdTooltip}>${rmdDisplay}</div><div></div></td>
                 <td class="amount income-column"><div><strong>${formatCurrency(period.yearlyTakeHome)}</strong></div><div></div></td>
             </tr>
         `;
