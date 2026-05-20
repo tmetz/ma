@@ -626,9 +626,12 @@ function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActiv
         
         // Calculate RMD for this year if active
         let yearlyRmd = null;
+        let rmdShortfall = false;
         if (rmdActive) {
             const divisor = getRmdDivisor(currentAge);
             yearlyRmd = taxDeferredBal / divisor;
+            // Shortfall if planned withdrawal is less than RMD required
+            rmdShortfall = (yearlyTaxDeferredWithdrawal + 0.01) < yearlyRmd;
             currentAge++;
         }
         
@@ -640,7 +643,8 @@ function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActiv
             brokerage: brokerageBal,
             savings: savingsBal,
             total: taxDeferredBal + taxFreeBal + brokerageBal + savingsBal,
-            rmd: yearlyRmd
+            rmd: yearlyRmd,
+            rmdShortfall: rmdShortfall
         });
     }
     
@@ -1074,7 +1078,7 @@ function renderYearlyDetails(periodIndex, period, container) {
     
     yearlyDetails.forEach(year => {
         const ageCell = hasRmd ? `<td class="amount">${year.age}</td>` : '';
-        const rmdCell = hasRmd ? `<td class="amount">${year.rmd === null ? '—' : formatCurrency(year.rmd)}</td>` : '';
+        const rmdCell = hasRmd ? `<td class="amount${year.rmdShortfall ? ' rmd-warning' : ''}">${year.rmd === null ? '—' : formatCurrency(year.rmd)}</td>` : '';
         tableHTML += `
             <tr>
                 <td class="year-cell">${year.year}</td>

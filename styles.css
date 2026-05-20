@@ -644,7 +644,8 @@ small {
     background-color: rgba(245, 158, 11, 0.08);
 }
 
-.period-table .rmd-warning {
+.period-table .rmd-warning,
+.yearly-details-table .rmd-warning {
     color: var(--danger-color);
 }
 
