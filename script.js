@@ -1056,8 +1056,8 @@ function renderYearlyDetails(periodIndex, period, container) {
                     <th class="amount">Tax-Free</th>
                     <th class="amount">Brokerage</th>
                     <th class="amount">Savings</th>
-                    <th class="amount">Total Balance</th>
                     ${rmdCol}
+                    <th class="amount">Total Balance</th>
                 </tr>
             </thead>
             <tbody>
@@ -1083,8 +1083,8 @@ function renderYearlyDetails(periodIndex, period, container) {
                 <td class="amount">${formatCurrency(year.taxFree)}</td>
                 <td class="amount">${formatCurrency(year.brokerage)}</td>
                 <td class="amount">${formatCurrency(year.savings)}</td>
-                <td class="amount"><strong>${formatCurrency(year.total)}</strong></td>
                 ${rmdCell}
+                <td class="amount"><strong>${formatCurrency(year.total)}</strong></td>
             </tr>
         `;
     });
