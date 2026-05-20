@@ -906,8 +906,6 @@ function displayPeriodResults(periodResults, formatCurrency) {
                     <th class="amount">Tax-Free</th>
                     <th class="amount">Taxable</th>
                     <th class="amount">Total Balance</th>
-                    <th class="amount income-column">Taxable Income (Yearly)</th>
-                    <th class="amount income-column">Tax-Free Income (Yearly)</th>
                     <th class="amount rmd-column">RMD Required (Yearly)</th>
                     <th class="amount income-column">Yearly Take-Home</th>
                 </tr>
@@ -920,6 +918,8 @@ function displayPeriodResults(periodResults, formatCurrency) {
         const rmdTooltip = period.yearlyRmd === null
             ? ''
             : ` title="Min: ${formatCurrency(period.yearlyRmdMin)} | Max: ${formatCurrency(period.yearlyRmdMax)}"`;
+        
+        const takeHomeTooltip = `Taxable Income: ${formatCurrency(period.yearlyTaxableIncome)} | Tax-Free Income: ${formatCurrency(period.yearlyTaxFreeIncome)}`;
 
         tableHTML += `
             <tr>
@@ -931,10 +931,8 @@ function displayPeriodResults(periodResults, formatCurrency) {
                 <td class="amount"><div>${formatCurrency(period.taxFree)}</div><div></div></td>
                 <td class="amount"><div>${formatCurrency(period.taxable)}</div><div></div></td>
                 <td class="amount"><div><strong>${formatCurrency(period.total)}</strong></div><div></div></td>
-                <td class="amount income-column"><div>${formatCurrency(period.yearlyTaxableIncome)}</div><div></div></td>
-                <td class="amount income-column"><div>${formatCurrency(period.yearlyTaxFreeIncome)}</div><div></div></td>
                 <td class="amount rmd-column ${period.rmdShortfall ? 'rmd-warning' : ''}"><div${rmdTooltip}>${rmdDisplay}</div><div></div></td>
-                <td class="amount income-column"><div><strong>${formatCurrency(period.yearlyTakeHome)}</strong></div><div></div></td>
+                <td class="amount income-column"><div title="${takeHomeTooltip}"><strong>${formatCurrency(period.yearlyTakeHome)}</strong></div><div></div></td>
             </tr>
         `;
     });
