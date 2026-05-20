@@ -110,46 +110,6 @@ function calculateRmdPeriodRequirements(startingBalance, monthlyContribution, mo
     };
 }
 
-// Initialize the calculator
-document.addEventListener('DOMContentLoaded', function() {
-    // Add initial contribution period
-    addContributionPeriod();
-
-    // Save/Load/Delete calculation UI
-    const saveBtn = document.getElementById('saveCalculationBtn');
-    const loadSelect = document.getElementById('loadCalculationSelect');
-    const deleteBtn = document.getElementById('deleteCalculationBtn');
-    loadSavedCalculationNames();
-
-    saveBtn.addEventListener('click', function() {
-        const name = prompt('Enter a name for this calculation:');
-        if (!name) return;
-        const state = serializeCalculatorState();
-        localStorage.setItem('calc_' + name, JSON.stringify(state));
-        loadSavedCalculationNames(name);
-        alert('Calculation saved as "' + name + '"');
-    });
-
-    loadSelect.addEventListener('change', function() {
-        const name = loadSelect.value;
-        if (!name) return;
-        const raw = localStorage.getItem('calc_' + name);
-        if (!raw) return;
-        const state = JSON.parse(raw);
-        deserializeCalculatorState(state);
-    });
-
-    deleteBtn.addEventListener('click', function() {
-        const name = loadSelect.value;
-        if (!name) return;
-        if (confirm('Delete calculation "' + name + '"?')) {
-            localStorage.removeItem('calc_' + name);
-            loadSavedCalculationNames();
-            alert('Calculation deleted.');
-        }
-    });
-});
-
 function loadSavedCalculationNames(selectedName) {
     const loadSelect = document.getElementById('loadCalculationSelect');
     const prefix = 'calc_';
@@ -242,6 +202,11 @@ function deserializeCalculatorState(state) {
     });
 }
 
+// Initialize the calculator
+document.addEventListener('DOMContentLoaded', function() {
+    // Add initial contribution period
+    addContributionPeriod();
+
     // Prevent accidental mouse-wheel changes to focused numeric inputs.
     // This avoids subtle step-based shifts like 3000 -> 2999.99.
     document.addEventListener('wheel', (event) => {
@@ -266,6 +231,40 @@ function deserializeCalculatorState(state) {
         // Blur any focused element
         if (document.activeElement) {
             document.activeElement.blur();
+        }
+    });
+
+    // Save/Load/Delete calculation UI
+    const saveBtn = document.getElementById('saveCalculationBtn');
+    const loadSelect = document.getElementById('loadCalculationSelect');
+    const deleteBtn = document.getElementById('deleteCalculationBtn');
+    loadSavedCalculationNames();
+
+    saveBtn.addEventListener('click', function() {
+        const name = prompt('Enter a name for this calculation:');
+        if (!name) return;
+        const state = serializeCalculatorState();
+        localStorage.setItem('calc_' + name, JSON.stringify(state));
+        loadSavedCalculationNames(name);
+        alert('Calculation saved as "' + name + '"');
+    });
+
+    loadSelect.addEventListener('change', function() {
+        const name = loadSelect.value;
+        if (!name) return;
+        const raw = localStorage.getItem('calc_' + name);
+        if (!raw) return;
+        const state = JSON.parse(raw);
+        deserializeCalculatorState(state);
+    });
+
+    deleteBtn.addEventListener('click', function() {
+        const name = loadSelect.value;
+        if (!name) return;
+        if (confirm('Delete calculation "' + name + '"?')) {
+            localStorage.removeItem('calc_' + name);
+            loadSavedCalculationNames();
+            alert('Calculation deleted.');
         }
     });
 });
