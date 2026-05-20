@@ -144,17 +144,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Add a new contribution period
-function addContributionPeriod() {
+function addContributionPeriod(insertAfterId = null) {
     periodCount++;
     const periodsContainer = document.getElementById('contributionPeriods');
-    
+
     const periodDiv = document.createElement('div');
     periodDiv.className = 'contribution-period';
     periodDiv.id = `period-${periodCount}`;
-    
+
+    // Insert/Remove buttons
+    let headerButtons = '';
+    if (periodCount > 1) {
+        headerButtons += `<button type="button" class="btn btn-danger" onclick="removePeriod(${periodCount})">Remove</button>`;
+    }
+    headerButtons += `<button type="button" class="btn btn-secondary insert-below-btn" onclick="insertPeriodBelow(${periodCount})">Insert Period Below</button>`;
+
     periodDiv.innerHTML = `
         <div class="contribution-period-header">
-            ${periodCount > 1 ? `<button type="button" class="btn btn-danger" onclick="removePeriod(${periodCount})">Remove</button>` : ''}
+            ${headerButtons}
         </div>
         <div class="period-basics-row">
             <div class="input-group">
@@ -252,7 +259,21 @@ function addContributionPeriod() {
         </div>
     `;
     
-    periodsContainer.appendChild(periodDiv);
+    if (insertAfterId) {
+        const afterElem = document.getElementById(`period-${insertAfterId}`);
+        if (afterElem && afterElem.nextSibling) {
+            periodsContainer.insertBefore(periodDiv, afterElem.nextSibling);
+        } else {
+            periodsContainer.appendChild(periodDiv);
+        }
+    } else {
+        periodsContainer.appendChild(periodDiv);
+    }
+}
+
+// Insert a new period below the given period
+function insertPeriodBelow(periodId) {
+    addContributionPeriod(periodId);
 }
 
 // Remove a contribution period
