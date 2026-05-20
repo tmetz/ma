@@ -755,7 +755,6 @@ function displayPeriodResults(periodResults, formatCurrency) {
             <thead>
                 <tr>
                     <th>Period</th>
-                    <th>Cumulative Years</th>
                     <th class="amount">Tax-Deferred</th>
                     <th class="amount">Tax-Free</th>
                     <th class="amount">Taxable</th>
@@ -781,7 +780,6 @@ function displayPeriodResults(periodResults, formatCurrency) {
                     <div class="period-name">${period.periodName}</div>
                     <div class="period-duration">(${period.duration.toFixed(1)} years)</div>
                 </td>
-                <td><div>${period.cumulativeYears.toFixed(1)} years</div><div></div></td>
                 <td class="amount"><div>${formatCurrency(period.taxDeferred)}</div><div></div></td>
                 <td class="amount"><div>${formatCurrency(period.taxFree)}</div><div></div></td>
                 <td class="amount"><div>${formatCurrency(period.taxable)}</div><div></div></td>
