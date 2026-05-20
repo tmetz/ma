@@ -617,6 +617,15 @@ small {
     font-family: 'Courier New', monospace;
 }
 
+.period-table .years-column {
+    text-align: center;
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    white-space: nowrap;
+    padding: 12px 6px;
+}
+
 .period-table .income-column {
     border-left: 3px solid var(--secondary-color);
     font-weight: 600;
