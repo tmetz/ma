@@ -619,11 +619,11 @@ small {
 
 .period-table .years-column {
     text-align: center;
-    width: 48px;
-    min-width: 48px;
-    max-width: 48px;
-    white-space: nowrap;
+    width: 60px;
+    min-width: 60px;
+    max-width: 60px;
     padding: 12px 6px;
+    word-break: break-word;
 }
 
 .period-table .income-column {
