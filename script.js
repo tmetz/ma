@@ -1,5 +1,106 @@
 // Track contribution periods
 let periodCount = 0;
+const RMD_UNIFORM_LIFETIME_DIVISORS = {
+    75: 24.6,
+    76: 23.7,
+    77: 22.9,
+    78: 22.0,
+    79: 21.1,
+    80: 20.2,
+    81: 19.4,
+    82: 18.5,
+    83: 17.7,
+    84: 16.8,
+    85: 16.0,
+    86: 15.2,
+    87: 14.4,
+    88: 13.7,
+    89: 12.9,
+    90: 12.2,
+    91: 11.5,
+    92: 10.8,
+    93: 10.1,
+    94: 9.5,
+    95: 8.9,
+    96: 8.4,
+    97: 7.8,
+    98: 7.3,
+    99: 6.8,
+    100: 6.4,
+    101: 6.0,
+    102: 5.6,
+    103: 5.2,
+    104: 4.9,
+    105: 4.6,
+    106: 4.3,
+    107: 4.1,
+    108: 3.9,
+    109: 3.7,
+    110: 3.5,
+    111: 3.4,
+    112: 3.3,
+    113: 3.1,
+    114: 3.0,
+    115: 2.9,
+    116: 2.8,
+    117: 2.7,
+    118: 2.5,
+    119: 2.3,
+    120: 2.0
+};
+
+function getRmdDivisor(age) {
+    if (RMD_UNIFORM_LIFETIME_DIVISORS[age]) {
+        return RMD_UNIFORM_LIFETIME_DIVISORS[age];
+    }
+
+    const maxDefinedAge = 120;
+    return RMD_UNIFORM_LIFETIME_DIVISORS[maxDefinedAge];
+}
+
+function calculateRmdPeriodRequirements(startingBalance, monthlyContribution, monthlyWithdrawal, annualRate, durationYears, compoundFrequency, startingAge) {
+    if (durationYears <= 0) {
+        return {
+            maxAnnualRmd: 0,
+            annualRmds: [],
+            yearsEvaluated: 0
+        };
+    }
+
+    const fullYears = Math.floor(durationYears);
+    const fractionalYear = durationYears - fullYears;
+    const yearsEvaluated = fractionalYear > 0 ? fullYears + 1 : fullYears;
+
+    let runningBalance = startingBalance;
+    let currentAge = startingAge;
+    let maxAnnualRmd = 0;
+    const annualRmds = [];
+
+    for (let yearIndex = 0; yearIndex < yearsEvaluated; yearIndex++) {
+        const divisor = getRmdDivisor(currentAge);
+        const annualRmd = Math.max(0, runningBalance / divisor);
+        annualRmds.push(annualRmd);
+        maxAnnualRmd = Math.max(maxAnnualRmd, annualRmd);
+
+        const isFinalPartialYear = yearIndex === yearsEvaluated - 1 && fractionalYear > 0;
+        const segmentYears = isFinalPartialYear ? fractionalYear : 1;
+        runningBalance = calculateCompoundGrowth(
+            runningBalance,
+            monthlyContribution,
+            monthlyWithdrawal,
+            annualRate,
+            segmentYears,
+            compoundFrequency
+        ).finalBalance;
+        currentAge += 1;
+    }
+
+    return {
+        maxAnnualRmd: maxAnnualRmd,
+        annualRmds: annualRmds,
+        yearsEvaluated: yearsEvaluated
+    };
+}
 
 // Initialize the calculator
 document.addEventListener('DOMContentLoaded', function() {
@@ -61,6 +162,13 @@ function addContributionPeriod() {
             <div class="input-group">                <label for="duration-${periodCount}">Duration (Years)</label>
                 <input type="number" id="duration-${periodCount}" min="0" step="0.1" value="10" required>
             </div>
+        </div>
+        <div class="input-group rmd-checkbox-group">
+            <label class="rmd-checkbox-label" for="startRmd-${periodCount}">
+                <input type="checkbox" id="startRmd-${periodCount}">
+                <span>Begin calculating RMDs at this age</span>
+            </label>
+            <small>Assumes RMD start age is 75. Once started, RMD checks continue for all later periods using age-based IRS divisors.</small>
         </div>
         <div class="account-groups">
             <div class="account-group tax-deferred-group">
@@ -343,6 +451,8 @@ function calculateGrowth(event) {
     let savingsTotalWithdrawals = 0;
     
     let totalYears = 0;
+    let rmdActive = false;
+    let currentRmdAge = 75;
     
     // Track period-by-period results
     const periodResults = [];
@@ -354,6 +464,7 @@ function calculateGrowth(event) {
         
         const periodName = document.getElementById(`periodName-${periodId}`).value || `Period ${periodId}`;
         const duration = parseFloat(document.getElementById(`duration-${periodId}`).value);
+        const beginRmdInThisPeriod = document.getElementById(`startRmd-${periodId}`).checked;
         const grossIncome = parseFloat(document.getElementById(`grossIncome-${periodId}`).value) || 0;
         const taxDeferredContribution = parseFloat(document.getElementById(`taxDeferred-${periodId}`).value);
         const taxDeferredWithdrawal = parseFloat(document.getElementById(`taxDeferredWithdrawal-${periodId}`).value);
@@ -368,12 +479,36 @@ function calculateGrowth(event) {
         const savingsWithdrawal = parseFloat(document.getElementById(`savingsWithdrawal-${periodId}`).value);
         const savingsLumpSum = parseFloat(document.getElementById(`savingsLumpSum-${periodId}`).value) || 0;
         
+        const openingTaxDeferredBalance = taxDeferredBalance;
+
+        if (beginRmdInThisPeriod && !rmdActive) {
+            rmdActive = true;
+            currentRmdAge = 75;
+        }
+
         // Add lump sums at the start of the period
         taxDeferredBalance += taxDeferredLumpSum;
         taxFreeBalance += taxFreeLumpSum;
         brokerageBalance += brokerageLumpSum;
         savingsBalance += savingsLumpSum;
         brokerageCostBasis += brokerageLumpSum;
+
+        const annualTaxDeferredWithdrawalPlanned = taxDeferredWithdrawal * 12;
+        const rmdRequirements = rmdActive
+            ? calculateRmdPeriodRequirements(
+                openingTaxDeferredBalance,
+                taxDeferredContribution,
+                taxDeferredWithdrawal,
+                taxDeferredRate,
+                duration,
+                compoundFrequency,
+                currentRmdAge
+            )
+            : null;
+        const annualRmd = rmdRequirements ? rmdRequirements.maxAnnualRmd : null;
+        const rmdShortfall = rmdRequirements
+            ? annualTaxDeferredWithdrawalPlanned + 0.01 < rmdRequirements.maxAnnualRmd
+            : false;
         
         // Calculate growth for tax-deferred account
         const taxDeferredResult = calculateCompoundGrowth(
@@ -462,6 +597,10 @@ function calculateGrowth(event) {
         const yearlyTakeHome = (annualTaxableIncome + annualTaxFreeIncome) - totalTax;
 
         const taxableBalance = brokerageBalance + savingsBalance;
+
+        if (rmdActive && rmdRequirements) {
+            currentRmdAge += rmdRequirements.yearsEvaluated;
+        }
         
         // Store period results
         periodResults.push({
@@ -475,6 +614,8 @@ function calculateGrowth(event) {
             total: taxDeferredBalance + taxFreeBalance + taxableBalance,
             yearlyTaxableIncome: annualTaxableIncome,
             yearlyTaxFreeIncome: annualTaxFreeIncome,
+            yearlyRmd: annualRmd,
+            rmdShortfall: rmdShortfall,
             totalIncome: totalMonthlyIncome,
             yearlyTakeHome: yearlyTakeHome
         });
@@ -609,6 +750,7 @@ function displayPeriodResults(periodResults, formatCurrency) {
                     <th class="amount">Total Balance</th>
                     <th class="amount income-column">Taxable Income (Yearly)</th>
                     <th class="amount income-column">Tax-Free Income (Yearly)</th>
+                    <th class="amount rmd-column">RMD Required (Yearly)</th>
                     <th class="amount income-column">Yearly Take-Home</th>
                 </tr>
             </thead>
@@ -629,6 +771,7 @@ function displayPeriodResults(periodResults, formatCurrency) {
                 <td class="amount"><div><strong>${formatCurrency(period.total)}</strong></div><div></div></td>
                 <td class="amount income-column"><div>${formatCurrency(period.yearlyTaxableIncome)}</div><div></div></td>
                 <td class="amount income-column"><div>${formatCurrency(period.yearlyTaxFreeIncome)}</div><div></div></td>
+                <td class="amount rmd-column ${period.rmdShortfall ? 'rmd-warning' : ''}"><div>${period.yearlyRmd === null ? '—' : formatCurrency(period.yearlyRmd)}</div><div></div></td>
                 <td class="amount income-column"><div><strong>${formatCurrency(period.yearlyTakeHome)}</strong></div><div></div></td>
             </tr>
         `;

@@ -314,6 +314,25 @@ small {
     margin-bottom: 20px;
 }
 
+.rmd-checkbox-group {
+    margin-top: -5px;
+    margin-bottom: 20px;
+}
+
+.rmd-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rmd-checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
 .account-groups {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -590,8 +609,21 @@ small {
     font-weight: 600;
 }
 
+.period-table .rmd-column {
+    border-left: 3px solid #f59e0b;
+    font-weight: 600;
+}
+
 .period-table tbody .income-column {
     background-color: rgba(16, 185, 129, 0.05);
+}
+
+.period-table tbody .rmd-column {
+    background-color: rgba(245, 158, 11, 0.08);
+}
+
+.period-table .rmd-warning {
+    color: var(--danger-color);
 }
 
 .total-summary {
