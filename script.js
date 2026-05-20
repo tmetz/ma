@@ -1012,12 +1012,7 @@ function togglePeriodDetails(periodIndex) {
     const detailsRow = document.querySelector(`.yearly-details-row[data-period-index="${periodIndex}"]`);
     const expandBtn = document.querySelector(`.period-row[data-period-index="${periodIndex}"] .expand-btn`);
     
-    console.log('togglePeriodDetails called', periodIndex, { period, detailsRow, expandBtn, globalPeriodResults });
-    
-    if (!detailsRow) {
-        console.error('detailsRow not found');
-        return;
-    }
+    if (!detailsRow) return;
     
     if (detailsRow.classList.contains('hidden')) {
         // Expand
@@ -1026,8 +1021,9 @@ function togglePeriodDetails(periodIndex) {
         
         // Render yearly details if not already rendered
         const container = document.getElementById(`yearly-details-${periodIndex}`);
-        if (container.innerHTML === '<!-- Yearly details will be loaded here -->') {
+        if (!container.dataset.rendered) {
             renderYearlyDetails(periodIndex, period, container);
+            container.dataset.rendered = 'true';
         }
     } else {
         // Collapse
@@ -1150,9 +1146,7 @@ function displayPeriodResults(periodResults, formatCurrency) {
             </tr>
             <tr class="yearly-details-row hidden" data-period-index="${index}">
                 <td colspan="9">
-                    <div class="yearly-details-container" id="yearly-details-${index}">
-                        <!-- Yearly details will be loaded here -->
-                    </div>
+                    <div class="yearly-details-container" id="yearly-details-${index}"></div>
                 </td>
             </tr>
         `;
