@@ -5,6 +5,20 @@ let periodCount = 0;
 document.addEventListener('DOMContentLoaded', function() {
     // Add initial contribution period
     addContributionPeriod();
+
+    // Prevent accidental mouse-wheel changes to focused numeric inputs.
+    // This avoids subtle step-based shifts like 3000 -> 2999.99.
+    document.addEventListener('wheel', (event) => {
+        const activeElement = document.activeElement;
+        if (
+            activeElement &&
+            activeElement.tagName === 'INPUT' &&
+            activeElement.type === 'number' &&
+            event.target === activeElement
+        ) {
+            activeElement.blur();
+        }
+    }, { capture: true });
     
     // Set up event listeners
     document.getElementById('addPeriodBtn').addEventListener('click', addContributionPeriod);
