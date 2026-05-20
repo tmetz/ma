@@ -115,6 +115,133 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add initial contribution period
     addContributionPeriod();
 
+    // Save/Load/Delete calculation UI
+    const saveBtn = document.getElementById('saveCalculationBtn');
+    const loadSelect = document.getElementById('loadCalculationSelect');
+    const deleteBtn = document.getElementById('deleteCalculationBtn');
+    loadSavedCalculationNames();
+
+    saveBtn.addEventListener('click', function() {
+        const name = prompt('Enter a name for this calculation:');
+        if (!name) return;
+        const state = serializeCalculatorState();
+        localStorage.setItem('calc_' + name, JSON.stringify(state));
+        loadSavedCalculationNames(name);
+        alert('Calculation saved as "' + name + '"');
+    });
+
+    loadSelect.addEventListener('change', function() {
+        const name = loadSelect.value;
+        if (!name) return;
+        const raw = localStorage.getItem('calc_' + name);
+        if (!raw) return;
+        const state = JSON.parse(raw);
+        deserializeCalculatorState(state);
+    });
+
+    deleteBtn.addEventListener('click', function() {
+        const name = loadSelect.value;
+        if (!name) return;
+        if (confirm('Delete calculation "' + name + '"?')) {
+            localStorage.removeItem('calc_' + name);
+            loadSavedCalculationNames();
+            alert('Calculation deleted.');
+        }
+    });
+});
+
+function loadSavedCalculationNames(selectedName) {
+    const loadSelect = document.getElementById('loadCalculationSelect');
+    const prefix = 'calc_';
+    const names = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(prefix)) {
+            names.push(key.substring(prefix.length));
+        }
+    }
+    loadSelect.innerHTML = '<option value="">Load Calculation...</option>' +
+        names.map(n => `<option value="${n}"${n === selectedName ? ' selected' : ''}>${n}</option>`).join('');
+}
+
+function serializeCalculatorState() {
+    // Save all form fields and periods
+    const state = {};
+    // Top-level fields
+    [
+        'taxDeferredBalance', 'taxDeferredRate',
+        'taxFreeBalance', 'taxFreeRate',
+        'brokerageBalance', 'brokerageRate',
+        'savingsBalance', 'savingsRate'
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        state[id] = el ? el.value : null;
+    });
+    // Compound frequency
+    state.compoundFrequency = document.querySelector('input[name="compoundFrequency"]:checked').value;
+
+    // Periods
+    state.periods = [];
+    document.querySelectorAll('.contribution-period').forEach(period => {
+        const periodId = period.id.split('-')[1];
+        const periodState = {};
+        [
+            'periodName', 'grossIncome', 'duration',
+            'taxDeferred', 'taxDeferredWithdrawal', 'taxDeferredLumpSum',
+            'taxFree', 'taxFreeWithdrawal', 'taxFreeLumpSum',
+            'brokerage', 'brokerageWithdrawal', 'brokerageLumpSum',
+            'savings', 'savingsWithdrawal', 'savingsLumpSum'
+        ].forEach(field => {
+            const el = document.getElementById(`${field}-${periodId}`);
+            periodState[field] = el ? el.value : null;
+        });
+        // RMD start checkbox
+        const rmdEl = document.getElementById(`startRmd-${periodId}`);
+        periodState.startRmd = rmdEl ? rmdEl.checked : false;
+        state.periods.push(periodState);
+    });
+    return state;
+}
+
+function deserializeCalculatorState(state) {
+    // Restore top-level fields
+    [
+        'taxDeferredBalance', 'taxDeferredRate',
+        'taxFreeBalance', 'taxFreeRate',
+        'brokerageBalance', 'brokerageRate',
+        'savingsBalance', 'savingsRate'
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && state[id] !== undefined) el.value = state[id];
+    });
+    // Compound frequency
+    if (state.compoundFrequency) {
+        const radio = document.querySelector(`input[name="compoundFrequency"][value="${state.compoundFrequency}"]`);
+        if (radio) radio.checked = true;
+    }
+    // Remove all periods
+    document.getElementById('contributionPeriods').innerHTML = '';
+    periodCount = 0;
+    // Add periods
+    (state.periods || []).forEach((period, idx) => {
+        addContributionPeriod();
+        const periodId = periodCount;
+        [
+            'periodName', 'grossIncome', 'duration',
+            'taxDeferred', 'taxDeferredWithdrawal', 'taxDeferredLumpSum',
+            'taxFree', 'taxFreeWithdrawal', 'taxFreeLumpSum',
+            'brokerage', 'brokerageWithdrawal', 'brokerageLumpSum',
+            'savings', 'savingsWithdrawal', 'savingsLumpSum'
+        ].forEach(field => {
+            const el = document.getElementById(`${field}-${periodId}`);
+            if (el && period[field] !== undefined) el.value = period[field];
+        });
+        // RMD start checkbox
+        const rmdEl = document.getElementById(`startRmd-${periodId}`);
+        if (rmdEl) rmdEl.checked = !!period.startRmd;
+    });
+}
+
     // Prevent accidental mouse-wheel changes to focused numeric inputs.
     // This avoids subtle step-based shifts like 3000 -> 2999.99.
     document.addEventListener('wheel', (event) => {

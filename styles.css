@@ -1,3 +1,16 @@
+.save-load-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+.load-select {
+    min-width: 180px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    font-size: 1rem;
+}
 :root {
     --primary-color: #2563eb;
     --secondary-color: #10b981;
