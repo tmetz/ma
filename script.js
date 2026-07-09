@@ -570,7 +570,7 @@ function calculateCompoundGrowth(principal, monthlyContribution, monthlyWithdraw
 }
 
 // Calculate yearly snapshots for a single period (used for expandable rows)
-function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActive, startRmdAge = 75) {
+function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActive, startRmdAge = 75, compoundFrequency = 'monthly') {
     const yearlyDetails = [];
     let taxDeferredBal = startingBalances.taxDeferred + (periodData.taxDeferredLumpSum || 0);
     let taxFreeBal = startingBalances.taxFree + (periodData.taxFreeLumpSum || 0);
@@ -588,42 +588,48 @@ function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActiv
         // For the last partial year, adjust to the actual fractional amount
         const yearFraction = year <= Math.floor(periodData.duration) ? 1 : (periodData.duration - Math.floor(periodData.duration));
         
-        // Annual amounts
-        const yearlyTaxDeferredContribution = periodData.taxDeferredContribution * 12 * yearFraction;
-        const yearlyTaxDeferredWithdrawal = periodData.taxDeferredWithdrawal * 12 * yearFraction;
-        const yearlyTaxFreeContribution = periodData.taxFreeContribution * 12 * yearFraction;
-        const yearlyTaxFreeWithdrawal = periodData.taxFreeWithdrawal * 12 * yearFraction;
-        const yearlyBrokerageContribution = periodData.brokerageContribution * 12 * yearFraction;
-        const yearlyBrokerageWithdrawal = periodData.brokerageWithdrawal * 12 * yearFraction;
-        const yearlySavingsContribution = periodData.savingsContribution * 12 * yearFraction;
-        const yearlySavingsWithdrawal = periodData.savingsWithdrawal * 12 * yearFraction;
+        // Use calculateCompoundGrowth for each year segment to match the main calculation
+        const taxDeferredResult = calculateCompoundGrowth(
+            taxDeferredBal,
+            periodData.taxDeferredContribution,
+            periodData.taxDeferredWithdrawal,
+            rates.taxDeferred,
+            yearFraction,
+            compoundFrequency
+        );
+        taxDeferredBal = taxDeferredResult.finalBalance;
         
-        // Update balances with contributions and withdrawals
-        taxDeferredBal += yearlyTaxDeferredContribution - yearlyTaxDeferredWithdrawal;
-        taxFreeBal += yearlyTaxFreeContribution - yearlyTaxFreeWithdrawal;
+        const taxFreeResult = calculateCompoundGrowth(
+            taxFreeBal,
+            periodData.taxFreeContribution,
+            periodData.taxFreeWithdrawal,
+            rates.taxFree,
+            yearFraction,
+            compoundFrequency
+        );
+        taxFreeBal = taxFreeResult.finalBalance;
         
-        // Brokerage gain calculation
-        const annualRate = rates.brokerage / 100;
-        const brokerageGain = brokerageBal * annualRate;
-        brokerageCostBasis = Math.max(0, Math.min(brokerageCostBasis, brokerageBal + brokerageGain));
-        const gainRatio = (brokerageBal + brokerageGain) > 0
-            ? Math.max(0, brokerageGain / (brokerageBal + brokerageGain))
-            : 0;
-        const realizedGains = yearlyBrokerageWithdrawal * gainRatio;
-        brokerageCostBasis -= Math.max(0, yearlyBrokerageWithdrawal - realizedGains);
-        brokerageBal += brokerageGain + yearlyBrokerageContribution - yearlyBrokerageWithdrawal;
+        const brokerageResult = calculateCompoundGrowth(
+            brokerageBal,
+            periodData.brokerageContribution,
+            periodData.brokerageWithdrawal,
+            rates.brokerage,
+            yearFraction,
+            compoundFrequency,
+            brokerageCostBasis
+        );
+        brokerageBal = brokerageResult.finalBalance;
+        brokerageCostBasis = brokerageResult.finalCostBasis;
         
-        // Savings account (no gains calculated in this model)
-        savingsBal += yearlySavingsContribution - yearlySavingsWithdrawal;
-        
-        // Apply growth
-        const taxDeferredGrowth = taxDeferredBal * (rates.taxDeferred / 100);
-        const taxFreeGrowth = taxFreeBal * (rates.taxFree / 100);
-        const savingsGrowth = savingsBal * (rates.savings / 100);
-        
-        taxDeferredBal += taxDeferredGrowth;
-        taxFreeBal += taxFreeGrowth;
-        savingsBal += savingsGrowth;
+        const savingsResult = calculateCompoundGrowth(
+            savingsBal,
+            periodData.savingsContribution,
+            periodData.savingsWithdrawal,
+            rates.savings,
+            yearFraction,
+            compoundFrequency
+        );
+        savingsBal = savingsResult.finalBalance;
         
         // Calculate RMD for this year if active
         let yearlyRmd = null;
@@ -631,7 +637,7 @@ function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActiv
         if (rmdActive) {
             const divisor = getRmdDivisor(currentAge);
             yearlyRmd = taxDeferredBal / divisor;
-            // Shortfall if planned withdrawal is less than RMD required
+            const yearlyTaxDeferredWithdrawal = periodData.taxDeferredWithdrawal * 12 * yearFraction;
             rmdShortfall = (yearlyTaxDeferredWithdrawal + 0.01) < yearlyRmd;
             currentAge++;
         }
@@ -896,7 +902,8 @@ function calculateGrowth(event) {
                 savings: savingsRate
             },
             rmdActive: rmdActive,
-            rmdAgeAtStart: yearlyRmdAgeAtStart
+            rmdAgeAtStart: yearlyRmdAgeAtStart,
+            compoundFrequency: compoundFrequency
         });
     });
     
@@ -1044,7 +1051,8 @@ function renderYearlyDetails(periodIndex, period, container) {
         period.startingBalances,
         period.rates,
         period.rmdActive,
-        period.rmdAgeAtStart
+        period.rmdAgeAtStart,
+        period.compoundFrequency
     );
     
     const hasRmd = period.rmdActive;
