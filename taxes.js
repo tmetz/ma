@@ -1,15 +1,15 @@
 // Tax calculation functions for Three Bucket Investment Calculator
 
-// Calculate federal income tax for single filer (2025 brackets)
+// Calculate federal income tax for single filer (2026 brackets)
 function calculateFederalTax(annualIncome) {
-    // 2025 tax brackets for single filers
+    // 2026 tax brackets for single filers
     const brackets = [
-        { limit: 11925, rate: 0.10 },
-        { limit: 48475, rate: 0.12 },
-        { limit: 103350, rate: 0.22 },
-        { limit: 197300, rate: 0.24 },
-        { limit: 250525, rate: 0.32 },
-        { limit: 626350, rate: 0.35 },
+        { limit: 12400, rate: 0.10 },
+        { limit: 50400, rate: 0.12 },
+        { limit: 105700, rate: 0.22 },
+        { limit: 201775, rate: 0.24 },
+        { limit: 256225, rate: 0.32 },
+        { limit: 640600, rate: 0.35 },
         { limit: Infinity, rate: 0.37 }
     ];
     
@@ -35,15 +35,15 @@ function calculateFederalTax(annualIncome) {
     return tax;
 }
 
-// Calculate federal long-term capital gains tax for single filer (2025 thresholds from IRS Topic 409)
+// Calculate federal long-term capital gains tax for single filer (2026 thresholds)
 function calculateLongTermCapitalGainsTax(ordinaryTaxableIncome, longTermCapitalGains) {
     if (longTermCapitalGains <= 0) {
         return 0;
     }
 
-    // IRS Topic 409 (tax year 2025, single filer)
-    const zeroRateLimit = 48350;
-    const fifteenRateLimit = 533400;
+    // Tax year 2026, single filer
+    const zeroRateLimit = 49450;
+    const fifteenRateLimit = 545500;
 
     let remainingGains = longTermCapitalGains;
     let tax = 0;
