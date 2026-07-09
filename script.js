@@ -1142,7 +1142,7 @@ function displayPeriodResults(periodResults, formatCurrency) {
             <tr class="period-row" data-period-index="${index}">
                 <td class="expand-cell"><button class="expand-btn" onclick="togglePeriodDetails(${index})" title="Expand to see yearly details">▶</button></td>
                 <td class="period-cell">
-                    <div class="period-name" title="${period.periodName}">${period.periodName.length > 10 ? period.periodName.substring(0, 10) + '…' : period.periodName}</div>
+                    <div class="period-name" title="${period.periodName}">${period.periodName.length > 15 ? period.periodName.substring(0, 15) + '…' : period.periodName}</div>
                     <div class="period-duration">(${period.duration.toFixed(1)} years)</div>
                 </td>
                 <td class="years-column"><div>${period.cumulativeYears.toFixed(1)}</div></td>
