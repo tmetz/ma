@@ -4,6 +4,13 @@
     align-items: center;
     margin-bottom: 18px;
 }
+.save-load-row .btn,
+.save-load-row .load-select {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    height: 42px;
+    margin-top: 0;
+}
 .load-select {
     min-width: 180px;
     padding: 10px;
