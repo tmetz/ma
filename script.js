@@ -241,7 +241,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSavedCalculationNames();
 
     saveBtn.addEventListener('click', function() {
-        const name = prompt('Enter a name for this calculation:');
+        const currentName = loadSelect.value;
+        const name = prompt('Enter a name for this calculation:', currentName || '');
         if (!name) return;
         const state = serializeCalculatorState();
         localStorage.setItem('calc_' + name, JSON.stringify(state));
