@@ -113,8 +113,10 @@ for (const frequency of ['monthly', 'annually']) {
         app.calculator.renderYearlyDetails(2, periods[2], container);
         assert.match(container.innerHTML, />Debt</);
         assert.match(container.innerHTML, />Net Worth</);
-        assert.match(container.innerHTML, /\$2,100/);
+        assert.match(container.innerHTML, /<td class="amount debt-amount">-\$2,100<\/td>/);
         assert.match(container.innerHTML, /-\$1,100/);
+        app.calculator.renderYearlyDetails(0, periods[0], container);
+        assert.match(container.innerHTML, /<td class="amount debt-amount">\$0<\/td>/);
         assert.equal(app.elements.get('totalResult').textContent, '$1,000.00');
     });
 }

@@ -661,7 +661,8 @@ small {
 }
 
 .period-table .rmd-warning,
-.yearly-details-table .rmd-warning {
+.yearly-details-table .rmd-warning,
+.yearly-details-table .debt-amount {
     color: var(--danger-color);
 }
 

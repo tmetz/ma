@@ -1133,7 +1133,7 @@ function renderYearlyDetails(periodIndex, period, container) {
                 <td class="amount">${formatCurrency(year.taxFree)}</td>
                 <td class="amount">${formatCurrency(year.brokerage)}</td>
                 <td class="amount">${formatCurrency(year.savings)}</td>
-                <td class="amount">${formatCurrency(year.debt)}</td>
+                <td class="amount debt-amount">${formatCurrency(year.debt > 0 ? -year.debt : 0)}</td>
                 ${rmdCell}
                 <td class="amount"><strong>${formatCurrency(year.total)}</strong></td>
             </tr>
