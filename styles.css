@@ -401,12 +401,12 @@ small {
 }
 
 .debt-group {
-    border-color: var(--danger-color);
-    background-color: rgba(239, 68, 68, 0.05);
+    border-color: #b45309;
+    background-color: rgba(180, 83, 9, 0.05);
 }
 
 .debt-group h5 {
-    color: var(--danger-color);
+    color: #b45309;
 }
 
 .account-group .input-group {
