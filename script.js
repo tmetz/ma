@@ -132,7 +132,7 @@ function serializeCalculatorState() {
         'taxDeferredBalance', 'taxDeferredRate',
         'taxFreeBalance', 'taxFreeRate',
         'brokerageBalance', 'brokerageRate',
-        'savingsBalance', 'savingsRate'
+        'savingsBalance', 'savingsRate', 'startingDebt'
     ].forEach(id => {
         const el = document.getElementById(id);
         state[id] = el ? el.value : null;
@@ -150,7 +150,8 @@ function serializeCalculatorState() {
             'taxDeferred', 'taxDeferredWithdrawal', 'taxDeferredLumpSum',
             'taxFree', 'taxFreeWithdrawal', 'taxFreeLumpSum',
             'brokerage', 'brokerageWithdrawal', 'brokerageLumpSum',
-            'savings', 'savingsWithdrawal', 'savingsLumpSum'
+            'savings', 'savingsWithdrawal', 'savingsLumpSum',
+            'debtPayDown', 'debtAccrue'
         ].forEach(field => {
             const el = document.getElementById(`${field}-${periodId}`);
             periodState[field] = el ? el.value : null;
@@ -174,6 +175,7 @@ function deserializeCalculatorState(state) {
         const el = document.getElementById(id);
         if (el && state[id] !== undefined) el.value = state[id];
     });
+    document.getElementById('startingDebt').value = state.startingDebt ?? '0';
     // Compound frequency
     if (state.compoundFrequency) {
         const radio = document.querySelector(`input[name="compoundFrequency"][value="${state.compoundFrequency}"]`);
@@ -191,7 +193,8 @@ function deserializeCalculatorState(state) {
             'taxDeferred', 'taxDeferredWithdrawal', 'taxDeferredLumpSum',
             'taxFree', 'taxFreeWithdrawal', 'taxFreeLumpSum',
             'brokerage', 'brokerageWithdrawal', 'brokerageLumpSum',
-            'savings', 'savingsWithdrawal', 'savingsLumpSum'
+            'savings', 'savingsWithdrawal', 'savingsLumpSum',
+            'debtPayDown', 'debtAccrue'
         ].forEach(field => {
             const el = document.getElementById(`${field}-${periodId}`);
             if (el && period[field] !== undefined) el.value = period[field];
@@ -356,6 +359,18 @@ function addContributionPeriod(insertAfterId = null) {
                     <label for="savingsWithdrawal-${periodCount}">Withdrawal ($/month)</label>
                     <input type="number" id="savingsWithdrawal-${periodCount}" min="0" step="0.01" value="0" required>
                 </div>
+            </div>
+            <div class="account-group debt-group">
+                <h5>Debt Payoff</h5>
+                <div class="input-group">
+                    <label for="debtPayDown-${periodCount}">Pay Down ($/month)</label>
+                    <input type="number" id="debtPayDown-${periodCount}" min="0" step="0.01" value="0" required>
+                </div>
+                <div class="input-group">
+                    <label for="debtAccrue-${periodCount}">Accrue ($/month)</label>
+                    <input type="number" id="debtAccrue-${periodCount}" min="0" step="0.01" value="0" required>
+                </div>
+                <small>Debt stops at $0. These amounts do not automatically change your investment or savings balances.</small>
             </div>
         </div>
         <div class="lump-sum-section">
@@ -569,6 +584,10 @@ function calculateCompoundGrowth(principal, monthlyContribution, monthlyWithdraw
     }
 }
 
+function calculateDebtBalance(startingDebt, monthlyPayDown, monthlyAccrue, years) {
+    return Math.max(0, startingDebt + (monthlyAccrue - monthlyPayDown) * years * 12);
+}
+
 // Calculate yearly snapshots for a single period (used for expandable rows)
 function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActive, startRmdAge = 75, compoundFrequency = 'monthly') {
     const yearlyDetails = [];
@@ -630,6 +649,12 @@ function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActiv
             compoundFrequency
         );
         savingsBal = savingsResult.finalBalance;
+        const debtBalance = calculateDebtBalance(
+            startingBalances.debt,
+            periodData.debtPayDown,
+            periodData.debtAccrue,
+            Math.min(year, periodData.duration)
+        );
         
         // Calculate RMD for this year if active
         let yearlyRmd = null;
@@ -649,7 +674,8 @@ function getYearlyDetailsForPeriod(periodData, startingBalances, rates, rmdActiv
             taxFree: taxFreeBal,
             brokerage: brokerageBal,
             savings: savingsBal,
-            total: taxDeferredBal + taxFreeBal + brokerageBal + savingsBal,
+            debt: debtBalance,
+            total: taxDeferredBal + taxFreeBal + brokerageBal + savingsBal - debtBalance,
             rmd: yearlyRmd,
             rmdShortfall: rmdShortfall
         });
@@ -667,6 +693,7 @@ function calculateGrowth(event) {
     const taxFreeStart = parseFloat(document.getElementById('taxFreeBalance').value);
     const brokerageStart = parseFloat(document.getElementById('brokerageBalance').value);
     const savingsStart = parseFloat(document.getElementById('savingsBalance').value);
+    const startingDebt = parseFloat(document.getElementById('startingDebt').value);
     const taxableStart = brokerageStart + savingsStart;
     
     // Get growth rates
@@ -683,6 +710,7 @@ function calculateGrowth(event) {
     let taxFreeBalance = taxFreeStart;
     let brokerageBalance = brokerageStart;
     let savingsBalance = savingsStart;
+    let debtBalance = startingDebt;
     let brokerageCostBasis = brokerageStart;
     
     let taxDeferredTotalContributions = 0;
@@ -723,11 +751,14 @@ function calculateGrowth(event) {
         const savingsContribution = parseFloat(document.getElementById(`savings-${periodId}`).value);
         const savingsWithdrawal = parseFloat(document.getElementById(`savingsWithdrawal-${periodId}`).value);
         const savingsLumpSum = parseFloat(document.getElementById(`savingsLumpSum-${periodId}`).value) || 0;
+        const debtPayDown = parseFloat(document.getElementById(`debtPayDown-${periodId}`).value);
+        const debtAccrue = parseFloat(document.getElementById(`debtAccrue-${periodId}`).value);
         
         const openingTaxDeferredBalance = taxDeferredBalance;
         const openingTaxFreeBalance = taxFreeBalance;
         const openingBrokerageBalance = brokerageBalance;
         const openingSavingsBalance = savingsBalance;
+        const openingDebtBalance = debtBalance;
         const openingBrokerageCostBasis = brokerageCostBasis;
 
         if (beginRmdInThisPeriod && !rmdActive) {
@@ -814,6 +845,7 @@ function calculateGrowth(event) {
         savingsBalance = savingsResult.finalBalance;
         savingsTotalContributions += savingsResult.totalContributions;
         savingsTotalWithdrawals += savingsResult.totalWithdrawals;
+        debtBalance = calculateDebtBalance(debtBalance, debtPayDown, debtAccrue, duration);
         
         totalYears += duration;
         
@@ -863,7 +895,8 @@ function calculateGrowth(event) {
             taxDeferred: taxDeferredBalance,
             taxFree: taxFreeBalance,
             taxable: taxableBalance,
-            total: taxDeferredBalance + taxFreeBalance + taxableBalance,
+            debt: debtBalance,
+            total: taxDeferredBalance + taxFreeBalance + taxableBalance - debtBalance,
             yearlyTaxableIncome: annualTaxableIncome,
             yearlyTaxFreeIncome: annualTaxFreeIncome,
             yearlyRmd: averageAnnualRmd,
@@ -886,6 +919,8 @@ function calculateGrowth(event) {
                 savingsContribution: savingsContribution,
                 savingsWithdrawal: savingsWithdrawal,
                 savingsLumpSum: savingsLumpSum,
+                debtPayDown: debtPayDown,
+                debtAccrue: debtAccrue,
                 duration: duration
             },
             startingBalances: {
@@ -893,6 +928,7 @@ function calculateGrowth(event) {
                 taxFree: openingTaxFreeBalance,
                 brokerage: openingBrokerageBalance,
                 savings: openingSavingsBalance,
+                debt: openingDebtBalance,
                 brokerageCostBasis: openingBrokerageCostBasis
             },
             rates: {
@@ -1069,8 +1105,9 @@ function renderYearlyDetails(periodIndex, period, container) {
                     <th class="amount">Tax-Free</th>
                     <th class="amount">Brokerage</th>
                     <th class="amount">Savings</th>
+                    <th class="amount">Debt</th>
                     ${rmdCol}
-                    <th class="amount">Total Balance</th>
+                    <th class="amount">Net Worth</th>
                 </tr>
             </thead>
             <tbody>
@@ -1096,6 +1133,7 @@ function renderYearlyDetails(periodIndex, period, container) {
                 <td class="amount">${formatCurrency(year.taxFree)}</td>
                 <td class="amount">${formatCurrency(year.brokerage)}</td>
                 <td class="amount">${formatCurrency(year.savings)}</td>
+                <td class="amount">${formatCurrency(year.debt)}</td>
                 ${rmdCell}
                 <td class="amount"><strong>${formatCurrency(year.total)}</strong></td>
             </tr>
@@ -1131,7 +1169,7 @@ function displayPeriodResults(periodResults, formatCurrency) {
                     <th class="amount">Tax-Deferred</th>
                     <th class="amount">Tax-Free</th>
                     <th class="amount">Taxable</th>
-                    <th class="amount">Total Balance</th>
+                    <th class="amount">Net Worth</th>
                     <th class="amount rmd-column">RMD Required (Yearly)</th>
                     <th class="amount income-column">Yearly Take-Home</th>
                 </tr>

@@ -400,6 +400,15 @@ small {
     color: #00a8b3;
 }
 
+.debt-group {
+    border-color: var(--danger-color);
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+.debt-group h5 {
+    color: var(--danger-color);
+}
+
 .account-group .input-group {
     margin-bottom: 15px;
 }

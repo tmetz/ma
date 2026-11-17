@@ -19,6 +19,8 @@ Learn more at [Money Guy's Three-Bucket Strategy](https://moneyguy.com/article/t
 - Input starting balances for all three account types
 - Set custom growth rates for each account
 - Add multiple contribution periods with different monthly amounts
+- Track starting debt separately from the buckets, with monthly Pay Down and Accrue amounts in each period
+- View net worth (assets minus debt) in period results and expand periods for yearly debt balances
 - See detailed breakdowns of contributions, growth, and final balances
 - Mobile-responsive design
 - Runs entirely in the browser (no backend required)
@@ -37,6 +39,12 @@ Simply open `index.html` in your web browser or visit the GitHub Pages site.
    - Period 3: $0/month for 15 years (retirement phase)
 4. Click "Calculate Growth" to see projected balances
 
+### Debt Pay-Down
+
+Enter Starting Debt in Account Settings, then set monthly Pay Down and Accrue amounts in each period's Debt Payoff box. Debt carries forward between periods and stops at $0; excess pay-down is ignored. Partial years prorate the monthly amounts. No interest is added automatically; include any interest in Accrue.
+
+Debt changes do not automatically withdraw from or deposit into investment or savings accounts, and do not change income or tax calculations. Period and yearly Net Worth subtract outstanding debt from assets; Total Portfolio Value remains assets only. Debt settings are saved with calculations, and older saved calculations start with no debt.
+
 ## GitHub Pages Setup
 
 This site is configured to run on GitHub Pages. To deploy:
@@ -54,6 +62,10 @@ Your calculator will be available at: `https://[username].github.io/[repository-
 - HTML5
 - CSS3 (with CSS Grid and Flexbox)
 - Vanilla JavaScript (no frameworks required)
+
+## Tests
+
+Run `node --test script.test.js` with Node.js to check debt calculations, net worth results, and saved-calculation compatibility.
 
 ## Disclaimer
 
