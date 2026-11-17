@@ -383,12 +383,12 @@ small {
 }
 
 .tax-free-group {
-    border-color: #f5576c;
-    background-color: rgba(245, 87, 108, 0.05);
+    border-color: #b45309;
+    background-color: rgba(180, 83, 9, 0.05);
 }
 
 .tax-free-group h5 {
-    color: #f5576c;
+    color: #b45309;
 }
 
 .taxable-group {
@@ -401,12 +401,12 @@ small {
 }
 
 .debt-group {
-    border-color: #b45309;
-    background-color: rgba(180, 83, 9, 0.05);
+    border-color: #f5576c;
+    background-color: rgba(245, 87, 108, 0.05);
 }
 
 .debt-group h5 {
-    color: #b45309;
+    color: #f5576c;
 }
 
 .account-group .input-group {
