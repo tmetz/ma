@@ -44,7 +44,7 @@ Simply open `index.html` in your web browser or visit the GitHub Pages site.
 
 Enter Starting Debt in Account Settings, then set monthly Pay Down and Accrue amounts in each period's Debt Payoff box. Debt carries forward between periods and stops at $0; excess pay-down is ignored. Partial years prorate the monthly amounts. No interest is added automatically; include any interest in Accrue.
 
-Debt changes do not automatically withdraw from or deposit into investment or savings accounts, and do not change income or tax calculations. Period and yearly Net Worth subtract outstanding debt from assets; Total Portfolio Value remains assets only. Debt settings are saved with calculations, and older saved calculations start with no debt.
+Debt changes do not automatically withdraw from or deposit into investment or savings accounts, and do not change income or tax calculations. Period and yearly Net Worth and the Total Net Worth summary subtract outstanding debt from assets. Starting Net Worth subtracts starting debt; Total Investment Growth reflects asset growth only, not debt changes. Debt settings are saved with calculations, and older saved calculations start with no debt.
 
 ## GitHub Pages Setup
 

@@ -146,9 +146,29 @@ for (const frequency of ['monthly', 'annually']) {
         assert.match(container.innerHTML, /-\$1,100/);
         app.calculator.renderYearlyDetails(0, periods[0], container);
         assert.match(container.innerHTML, /<td class="amount debt-amount">\$0<\/td>/);
-        assert.equal(app.elements.get('totalResult').textContent, '$1,000.00');
+        assert.equal(app.elements.get('totalResult').textContent, '-$1,100.00');
+        assert.equal(app.elements.get('totalStart').textContent, '-$4,000.00');
     });
 }
+
+test('net worth summary handles no debt and paid-off debt without changing investment growth', () => {
+    const app = createCalculator();
+    app.set('savingsBalance', 1000);
+    app.set('savingsRate', 0);
+    app.set('duration-1', 1);
+    app.calculate();
+    assert.equal(app.elements.get('totalResult').textContent, '$1,000.00');
+    assert.equal(app.elements.get('totalStart').textContent, '$1,000.00');
+    const growth = app.elements.get('totalGrowth').textContent;
+
+    app.set('startingDebt', 600);
+    app.set('debtPayDown-1', 100);
+    const periods = app.calculate();
+    assert.equal(periods[0].debt, 0);
+    assert.equal(app.elements.get('totalResult').textContent, '$1,000.00');
+    assert.equal(app.elements.get('totalStart').textContent, '$400.00');
+    assert.equal(app.elements.get('totalGrowth').textContent, growth);
+});
 
 test('debt does not change asset growth, income, taxes, or RMDs', () => {
     const app = createCalculator();

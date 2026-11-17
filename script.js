@@ -985,6 +985,10 @@ function calculateGrowth(event) {
                 growth: savingsGrowth
             }
         },
+        debt: {
+            start: startingDebt,
+            final: debtBalance
+        },
         totalYears: totalYears,
         periodResults: periodResults
     });
@@ -1028,8 +1032,8 @@ function displayResults(results) {
     document.getElementById('savingsGrowth').textContent = formatCurrency(results.taxable.savings.growth);
     
     // Total results
-    const totalFinal = results.taxDeferred.final + results.taxFree.final + results.taxable.final;
-    const totalStart = results.taxDeferred.start + results.taxFree.start + results.taxable.start;
+    const totalFinal = results.taxDeferred.final + results.taxFree.final + results.taxable.final - results.debt.final;
+    const totalStart = results.taxDeferred.start + results.taxFree.start + results.taxable.start - results.debt.start;
     const totalContributions = results.taxDeferred.contributions + results.taxFree.contributions + results.taxable.contributions;
     const totalWithdrawals = results.taxDeferred.withdrawals + results.taxFree.withdrawals + results.taxable.withdrawals;
     const totalGrowth = results.taxDeferred.growth + results.taxFree.growth + results.taxable.growth;
