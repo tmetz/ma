@@ -21,6 +21,7 @@ Learn more at [Money Guy's Three-Bucket Strategy](https://moneyguy.com/article/t
 - Add multiple contribution periods with different monthly amounts
 - Track starting debt separately from the buckets, with monthly Pay Down and Accrue amounts in each period
 - View net worth (assets minus debt) in period results and expand periods for yearly debt balances
+- Compare period results with a START row showing original balances and net worth at year 0; yearly RMD and take-home amounts are not applicable
 - See detailed breakdowns of contributions, growth, and final balances
 - Mobile-responsive design
 - Runs entirely in the browser (no backend required)

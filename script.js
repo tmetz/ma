@@ -1158,6 +1158,11 @@ function displayPeriodResults(periodResults, formatCurrency) {
         tableContainer.innerHTML = '<p>No periods to display</p>';
         return;
     }
+
+    const startingBalances = periodResults[0].startingBalances;
+    const startingTaxable = startingBalances.brokerage + startingBalances.savings;
+    const startingNetWorth = startingBalances.taxDeferred + startingBalances.taxFree
+        + startingTaxable - startingBalances.debt;
     
     let tableHTML = `
         <table class="period-table">
@@ -1175,6 +1180,17 @@ function displayPeriodResults(periodResults, formatCurrency) {
                 </tr>
             </thead>
             <tbody>
+                <tr class="start-row">
+                    <td class="expand-cell"></td>
+                    <td class="period-cell"><div class="period-name">START</div></td>
+                    <td class="years-column"><div>0</div></td>
+                    <td class="amount"><div>${formatCurrency(startingBalances.taxDeferred)}</div></td>
+                    <td class="amount"><div>${formatCurrency(startingBalances.taxFree)}</div></td>
+                    <td class="amount"><div>${formatCurrency(startingTaxable)}</div></td>
+                    <td class="amount"><div><strong>${formatCurrency(startingNetWorth)}</strong></div></td>
+                    <td class="amount rmd-column">—</td>
+                    <td class="amount income-column">—</td>
+                </tr>
     `;
     
     periodResults.forEach((period, index) => {

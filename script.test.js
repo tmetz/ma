@@ -60,6 +60,35 @@ function createCalculator() {
     };
 }
 
+test('period table starts with original balances before lump sums and keeps period indexes unchanged', () => {
+    const app = createCalculator();
+    app.set('taxDeferredBalance', 1000);
+    app.set('taxFreeBalance', 2000);
+    app.set('brokerageBalance', 3000);
+    app.set('savingsBalance', 4000);
+    app.set('startingDebt', 12000);
+    app.set('taxDeferredLumpSum-1', 500);
+    app.set('taxFreeLumpSum-1', 600);
+    app.set('brokerageLumpSum-1', 700);
+    app.set('savingsLumpSum-1', 800);
+    app.calculator.addContributionPeriod();
+
+    const periods = app.calculate();
+    const html = app.elements.get('periodResultsTable').innerHTML;
+    const startRow = html.match(/<tbody>\s*<tr class="start-row">([\s\S]*?)<\/tr>/);
+    assert.ok(startRow, 'START must be the first body row');
+    const cells = Array.from(startRow[1].matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/g),
+        match => match[1].replace(/<[^>]*>/g, '').trim());
+    assert.deepEqual(cells, ['', 'START', '0', '$1,000.00', '$2,000.00', '$7,000.00', '-$2,000.00', '—', '—']);
+    assert.doesNotMatch(startRow[1], /expand-btn|togglePeriodDetails/);
+    assert.equal(periods.length, 2);
+    for (let index = 0; index < periods.length; index++) {
+        assert.match(html, new RegExp(`<tr class="period-row" data-period-index="${index}">`));
+        assert.match(html, new RegExp(`onclick="togglePeriodDetails\\(${index}\\)"`));
+        assert.match(html, new RegExp(`id="yearly-details-${index}"`));
+    }
+});
+
 test('debt supports pay-down, accrual, simultaneous flows, partial years, and a zero floor', () => {
     const { calculator } = createCalculator();
     const cases = [
